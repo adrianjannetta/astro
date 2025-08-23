@@ -1,0 +1,361 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
+
+/**
+ * Interactive Stellar Parallax Demo
+ * ------------------------------------------------------
+ * Two synchronized views:
+ * 1) Top-down ecliptic view: Earth orbits the Sun. Target star is at a chosen distance.
+ * 2) Sky view: Apparent motion of the target star against fixed background stars over a year.
+ *
+ * Controls:
+ *  - Distance slider (parsecs). Display corresponding parallax p = 1/d (arcsec).
+ *  - Time-of-year slider (0..12 months) with Play/Pause.
+ *  - Toggle trace and Reset trace.
+ *
+ * Notes:
+ *  - The parallax ellipse on the sky depends on the star's ecliptic latitude. To keep the
+ *    core concept clear, we default to latitude = 0°, so the apparent motion is a line.
+ *    Use the optional latitude slider to see the ellipse form.
+ */
+
+// Utility: map month [0,12) to radians [0, 2π)
+const monthToAngle = (m) => (m / 12) * Math.PI * 2;
+
+export default function ParallaxDemo() {
+  // Core state
+  const [distancePc, setDistancePc] = useState(10); // parsecs
+  const [month, setMonth] = useState(0); // 0..12
+  const [playing, setPlaying] = useState(false);
+  const [showTrace, setShowTrace] = useState(true);
+  const [eclipticLatDeg, setEclipticLatDeg] = useState(0); // optional advanced control
+
+  // Animation
+  const lastTsRef = useRef(0);
+  const reqRef = useRef(0);
+
+  // Trace of apparent sky positions over time
+  const [tracePts, setTracePts] = useState([]); // {x,y} in sky-view pixels
+
+  // Derived values
+  const parallaxArcsec = 1 / distancePc; // definition of parsec
+  const parallaxMas = parallaxArcsec * 1000;
+
+  // Scaling constants (display-only)
+  const skySize = 360; // px square sky view
+  const skyCenter = { x: skySize / 2, y: skySize / 2 };
+  const skyParallaxScale = 260; // px per arcsec (for visibility)
+  const bgStarCount = 80;
+
+  // Background stars (fixed random but stable across renders)
+  const bgStars = useMemo(() => {
+    const rng = (seed) => {
+      let s = seed;
+      return () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
+    };
+    const rnd = rng(123456789);
+    const arr = [];
+    for (let i = 0; i < bgStarCount; i++) {
+      arr.push({
+        x: rnd() * skySize,
+        y: rnd() * skySize,
+        r: 0.7 + rnd() * 1.8,
+        a: 0.5 + rnd() * 0.5,
+      });
+    }
+    return arr;
+  }, []);
+
+  // Apparent position on the sky due to parallax at given month & latitude
+  // We model only the parallax component (no proper motion).
+  const apparentXY = useMemo(() => {
+    // Parallax displacement components for a star at ecliptic latitude beta:
+    // x = p * cos(lambda) * cos(beta)
+    // y = p * sin(lambda) * sin(beta)   (simplified to demonstrate ellipse vs line)
+    // Here we align ecliptic longitude so that at month=0, lambda=0.
+    const pArcsec = parallaxArcsec;
+    const lambda = monthToAngle(month);
+    const beta = (eclipticLatDeg * Math.PI) / 180;
+
+    const dxArcsec = pArcsec * Math.cos(lambda) * Math.cos(beta);
+    const dyArcsec = pArcsec * Math.sin(lambda) * Math.sin(beta);
+
+    // Convert to pixels for our sky view
+    const x = skyCenter.x + dxArcsec * skyParallaxScale;
+    const y = skyCenter.y - dyArcsec * skyParallaxScale; // y up is negative in screen coords
+    return { x, y };
+  }, [parallaxArcsec, month, eclipticLatDeg]);
+
+  // Update the trace when month changes and tracing is enabled
+  useEffect(() => {
+    if (!showTrace) return;
+    setTracePts((prev) => [...prev, apparentXY]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [month, apparentXY.x, apparentXY.y]);
+
+  // Animation loop for Play
+  useEffect(() => {
+    if (!playing) {
+      if (reqRef.current) cancelAnimationFrame(reqRef.current);
+      return;
+    }
+    const step = (ts) => {
+      const last = lastTsRef.current || ts;
+      const dt = ts - last;
+      lastTsRef.current = ts;
+      // Advance ~ 0.5 month per second
+      const monthsPerMs = 0.5 / 1000;
+      setMonth((m) => (m + dt * monthsPerMs) % 12);
+      reqRef.current = requestAnimationFrame(step);
+    };
+    reqRef.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(reqRef.current);
+  }, [playing]);
+
+  // Reset trace if distance or latitude changes (to avoid mixing scales)
+  useEffect(() => {
+    setTracePts([]);
+  }, [distancePc, eclipticLatDeg]);
+
+  // Top-down orbit view geometry
+  const orbitSize = 300;
+  const orbitCenter = { x: Math.round(orbitSize * 0.78), y: Math.round(orbitSize * 0.78) }; // offset Sun-Earth to bottom-right
+  const earthOrbitR = 35; // AU scaled (smaller again to emphasize Sun–star distance)
+
+  const earthPos = useMemo(() => {
+    const ang = monthToAngle(month);
+    return {
+      x: orbitCenter.x + earthOrbitR * Math.cos(ang),
+      y: orbitCenter.y + earthOrbitR * Math.sin(ang),
+    };
+  }, [month]);
+
+  // Place the target star along +x direction at a fixed angle; distance only affects label
+  // (It is effectively at infinity in the diagram; parallax is measured via baseline/angle.)
+  const starPosOrbitView = useMemo(() => {
+    // Place the target star at a radial distance that scales with the chosen parsec value
+    // Sun–Earth system is offset to bottom-right; push star toward top-left for max baseline.
+    const minPc = 0.5;
+    const maxPc = 100;
+    const margin = 12; // keep within frame
+    const padding = 12; // keep outside Earth's orbit
+    const minStarR = earthOrbitR + padding;
+
+    // Direction from Sun to star (toward top-left)
+    const theta = -3 * Math.PI / 4; // -135°
+    const c = Math.abs(Math.cos(theta));
+    const s = Math.abs(Math.sin(theta));
+
+    // Constrain by SVG bounds so the star never clips the edges along this direction
+    const rBoundX = (orbitCenter.x - margin) / (c > 1e-6 ? c : 1);
+    const rBoundY = (orbitCenter.y - margin) / (s > 1e-6 ? s : 1);
+    const maxStarR = Math.max(minStarR, Math.min(rBoundX, rBoundY) - margin);
+
+    // Scale with distance
+    const t = Math.min(Math.max((distancePc - minPc) / (maxPc - minPc), 0), 1);
+    const r = minStarR + t * (maxStarR - minStarR);
+
+    return {
+      x: orbitCenter.x + r * Math.cos(theta),
+      y: orbitCenter.y + r * Math.sin(theta),
+    };
+  }, [distancePc, earthOrbitR, orbitCenter.x, orbitCenter.y]);
+
+  return (
+    <div className="w-full max-w-5xl mx-auto p-4 space-y-4">
+      <h1 className="text-2xl font-bold">Stellar Parallax — Interactive Demo</h1>
+      <p className="text-sm opacity-80">
+        Move the <span className="font-semibold">Distance</span> slider to change the star's distance
+        (in parsecs). One parsec is defined so that a star at 1 pc has a parallax of 1 arcsecond.
+        The apparent motion on the sky (right) is the parallax only (no proper motion). Use the
+        optional <span className="font-semibold">Ecliptic Latitude</span> slider to morph the track
+        from a line (β = 0°) to an ellipse (β ≠ 0°).
+      </p>
+
+      {/* Controls */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="rounded-2xl p-4 shadow bg-white/70">
+          <label className="block text-sm font-semibold">Distance: {distancePc.toFixed(2)} pc</label>
+          <input
+            type="range"
+            min={0.5}
+            max={100}
+            step={0.01}
+            value={distancePc}
+            onChange={(e) => setDistancePc(parseFloat(e.target.value))}
+            className="w-full"
+          />
+          <div className="mt-2 text-sm">
+            Parallax p = <span className="font-semibold">{parallaxArcsec.toFixed(4)}</span> arcsec
+            ({parallaxMas.toFixed(1)} mas)
+          </div>
+
+          <div className="mt-4 flex items-center gap-2">
+            <button
+              onClick={() => setPlaying((v) => !v)}
+              className="px-3 py-1.5 rounded-xl shadow text-sm bg-black text-white"
+            >
+              {playing ? "Pause" : "Play"}
+            </button>
+            <button
+              onClick={() => setMonth(0)}
+              className="px-3 py-1.5 rounded-xl shadow text-sm bg-gray-800 text-white"
+            >
+              Reset Month
+            </button>
+            <button
+              onClick={() => setTracePts([])}
+              className="px-3 py-1.5 rounded-xl shadow text-sm bg-gray-200"
+            >
+              Clear Trace
+            </button>
+            <label className="flex items-center gap-2 ml-auto text-sm">
+              <input
+                type="checkbox"
+                checked={showTrace}
+                onChange={(e) => setShowTrace(e.target.checked)}
+              />
+              Show trace
+            </label>
+          </div>
+
+          <div className="mt-4">
+            <label className="block text-sm font-semibold">Time of year: {month.toFixed(2)} months</label>
+            <input
+              type="range"
+              min={0}
+              max={12}
+              step={0.01}
+              value={month}
+              onChange={(e) => setMonth(parseFloat(e.target.value))}
+              className="w-full"
+            />
+          </div>
+
+          <div className="mt-4">
+            <label className="block text-sm font-semibold">Ecliptic latitude β: {eclipticLatDeg.toFixed(0)}°</label>
+            <input
+              type="range"
+              min={0}
+              max={80}
+              step={1}
+              value={eclipticLatDeg}
+              onChange={(e) => setEclipticLatDeg(parseFloat(e.target.value))}
+              className="w-full"
+            />
+            <p className="text-xs opacity-70 mt-1">β = 0° ⇒ straight line; β &gt; 0° ⇒ ellipse.</p>
+          </div>
+        </div>
+
+        {/* Explanatory box */}
+        <div className="rounded-2xl p-4 shadow bg-white/70 text-sm leading-relaxed">
+          <h2 className="font-semibold mb-2">What you’re seeing</h2>
+          <ul className="list-disc ml-5 space-y-1">
+            <li>
+              <span className="font-semibold">Left:</span> Earth orbits the Sun. A distant star’s sightline
+              shifts slightly over the year.
+            </li>
+            <li>
+              <span className="font-semibold">Right:</span> The star’s <em>apparent</em> position on the sky among fixed
+              background stars. The track’s size scales with p = 1/d.
+            </li>
+            <li>
+              Increase the distance → parallax shrinks, so the track gets smaller.
+            </li>
+            <li>
+              Set β ≈ 0° for a straight line; increase β to see the classic parallax ellipse.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Views */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Orbit view */}
+        <div className="rounded-2xl p-4 shadow bg-white/70">
+          <div className="text-sm font-semibold mb-2">Top-down Ecliptic View</div>
+          <svg width={orbitSize} height={orbitSize} className="block mx-auto">
+            {/* background */}
+            <rect x={0} y={0} width={orbitSize} height={orbitSize} fill="#f8fafc" rx={12} />
+            {/* Sun */}
+            <circle cx={orbitCenter.x} cy={orbitCenter.y} r={10} fill="#f59e0b" />
+            {/* Earth orbit */}
+            <circle
+              cx={orbitCenter.x}
+              cy={orbitCenter.y}
+              r={earthOrbitR}
+              fill="none"
+              stroke="#94a3b8"
+              strokeDasharray="4 4"
+            />
+            {/* Earth */}
+            <circle cx={earthPos.x} cy={earthPos.y} r={6} fill="#3b82f6" />
+            {/* Line of sight to the star */}
+            <line
+              x1={earthPos.x}
+              y1={earthPos.y}
+              x2={starPosOrbitView.x}
+              y2={starPosOrbitView.y}
+              stroke="#111827"
+              strokeWidth={1.2}
+            />
+            {/* Target star (schematic position) */}
+            <g>
+              <circle cx={starPosOrbitView.x} cy={starPosOrbitView.y} r={4} fill="#ef4444" />
+              <text x={starPosOrbitView.x + 8} y={starPosOrbitView.y + 4} fontSize={12} fill="#111827">
+                Target star (d = {distancePc.toFixed(1)} pc)
+              </text>
+            </g>
+            {/* Labels */}
+            <text x={orbitCenter.x + earthOrbitR + 6} y={orbitCenter.y - 6} fontSize={11} fill="#334155">
+              1 AU
+            </text>
+          </svg>
+        </div>
+
+        {/* Sky view */}
+        <div className="rounded-2xl p-4 shadow bg-white/70">
+          <div className="text-sm font-semibold mb-2">Sky View (Apparent Motion)</div>
+          <svg width={skySize} height={skySize} className="block mx-auto">
+            <rect x={0} y={0} width={skySize} height={skySize} fill="#0b1220" rx={12} />
+            {/* Background stars */}
+            {bgStars.map((s, i) => (
+              <circle key={i} cx={s.x} cy={s.y} r={s.r} fill={`rgba(255,255,255,${s.a})`} />
+            ))}
+
+            {/* Trace */}
+            {showTrace && tracePts.length > 1 && (
+              <polyline
+                points={tracePts.map((p) => `${p.x},${p.y}`).join(" ")}
+                fill="none"
+                stroke="#22d3ee"
+                strokeWidth={1.5}
+                strokeLinejoin="round"
+              />
+            )}
+
+            {/* Current apparent position */}
+            <circle cx={apparentXY.x} cy={apparentXY.y} r={4} fill="#f43f5e" />
+
+            {/* Crosshair / reference */}
+            <line x1={skyCenter.x - 10} y1={skyCenter.y} x2={skyCenter.x + 10} y2={skyCenter.y} stroke="#94a3b8" strokeDasharray="3 3" />
+            <line x1={skyCenter.x} y1={skyCenter.y - 10} x2={skyCenter.x} y2={skyCenter.y + 10} stroke="#94a3b8" strokeDasharray="3 3" />
+
+            {/* Legend */}
+            <text x={12} y={24} fontSize={12} fill="#cbd5e1">
+              Center = mean position
+            </text>
+            <text x={12} y={40} fontSize={12} fill="#cbd5e1">
+              Track size ∝ p = 1/d
+            </text>
+          </svg>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="text-xs opacity-70">
+        Tip: Use a small distance (e.g., 1–3 pc) to exaggerate the motion, then increase distance to
+        see why distant stars have tiny parallaxes.
+      </div>
+    </div>
+  );
+}
