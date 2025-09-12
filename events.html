@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Today's Astronomical Events</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --card: #131a35;
+    --accent: #7aa2ff;
+    --muted: #9fb0d9;
+    --ok: #44c08a;
+    --warn: #ffb454;
+    --danger: #ff6b6b;
+    --border: #223057;
+  }
+  html, body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", Ubuntu, Cantarell, "Fira Sans", sans-serif; background: var(--bg); color: #e7edff; }
+  .wrap { max-width: 980px; margin: 24px auto; padding: 0 16px 40px; }
+  h1 { margin: 0 0 8px; font-weight: 700; letter-spacing: 0.2px; }
+  .sub { color: var(--muted); margin-bottom: 16px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 16px 0 20px; }
+  .pill { background: var(--card); border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; font-size: 14px; color: var(--muted); }
+  .pill strong { color: #e7edff; }
+  select, button, input[type="date"] {
+    background: var(--card); color: #e7edff; border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 10px; font-size: 14px;
+  }
+  button { cursor: pointer; }
+  button:focus, select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+  .card { grid-column: span 12; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+  @media (min-width: 700px) { .card { grid-column: span 6; } }
+  .title { font-weight: 650; margin: 0 0 6px; }
+  .time { color: var(--muted); font-size: 14px; margin-bottom: 6px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+  .badge { font-size: 12px; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--border); background: #0f1630; color: var(--muted); }
+  .loc { font-size: 13px; color: var(--muted); }
+  .desc { font-size: 14px; line-height: 1.35; margin-top: 8px; color: #d6defa; }
+  .none { padding: 18px; border: 1px dashed var(--border); border-radius: 12px; text-align: center; color: var(--muted); }
+  .footer { margin-top: 22px; font-size: 12.5px; color: var(--muted); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .switcher { display: inline-flex; gap: 8px; align-items: center; }
+  .switcher input { transform: translateY(1px); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Today's Astronomical Events</h1>
+  <div class="sub">
+    Showing events that overlap <strong id="dateLabel"></strong> (your local timezone).
+  </div>
+
+  <div class="toolbar">
+    <span class="pill">Now:&nbsp;<strong id="nowLabel">—</strong></span>
+    <label class="switcher">
+      <input type="checkbox" id="toggleAll" />
+      <span>Show all events</span>
+    </label>
+    <label>Test date:
+      <input type="date" id="testDate" />
+    </label>
+    <label>Filter category:
+      <select id="categoryFilter">
+        <option value="">All</option>
+      </select>
+    </label>
+  </div>
+
+  <div id="events" class="grid" aria-live="polite"></div>
+  <div class="footer">
+    Tip: for testing, append <code>?date=YYYY-MM-DD</code> to the URL.  
+    Host this file on GitHub Pages and embed it with an <code>&lt;iframe&gt;</code>.
+  </div>
+</div>
+
+<script>
+/*
+  === How to add/edit events ===
+  - start / end: ISO strings are best. Include "Z" if UTC, or an offset like "+00:00".
+  - All-day event for a single date? Use start: "2025-09-23" and end: "2025-09-23".
+  - Multi-day event? Use date-only range (inclusive) or full timestamps.
+  - If 'end' is omitted, the event is treated as an instant (momentary) event.
+  - 'categories' supports filtering; use any tags you like.
+*/
+const EVENTS = [
+  // --- Sample data (replace with your real list) ---
+  {
+    id: "eqx-2025",
+    title: "September Equinox",
+    start: "2025-09-22T13:43:00Z",
+    end: "2025-09-22T13:43:00Z",
+    categories: ["Solar", "Seasonal"],
+    location: "Global",
+    description: "Moment when the Sun crosses the celestial equator heading south."
+  },
+  {
+    id: "moon-occ-demo",
+    title: "Aldebaran Lunar Occultation (example)",
+    start: "2025-10-05T23:20:00Z",
+    end: "2025-10-06T01:05:00Z",
+    categories: ["Lunar", "Occultation"],
+    location: "Europe (varies)",
+    description: "The Moon occults Aldebaran; visibility depends on your location."
+  },
+  {
+    id: "iss-pass-tyne",
+    title: "Bright ISS Pass (example)",
+    start: "2025-09-12T20:13:00+01:00",
+    end: "2025-09-12T20:19:00+01:00",
+    categories: ["Satellite", "ISS"],
+    location: "Northern England",
+    description: "International Space Station visible as a bright moving star."
+  },
+  {
+    id: "taurids-peak",
+    title: "Taurid Meteor Activity (broad window)",
+    start: "2025-10-20",
+    end: "2025-11-30",
+    categories: ["Meteors"],
+    location: "Global (best after midnight)",
+    description: "Long, slow meteors; sporadic fireballs are possible."
+  },
+  {
+    id: "local-club",
+    title: "NASTRO Public Observing (example)",
+    start: "2025-09-12T19:30:00+01:00",
+    end: "2025-09-12T22:00:00+01:00",
+    categories: ["Outreach", "Local"],
+    location: "Northumberland",
+    description: "Telescopes out if clear; beginners welcome."
+  },
+  {
+    id: "all-day-example",
+    title: "All-day Venus–Regulus Conjunction (example)",
+    start: "2025-09-15",
+    end: "2025-09-15",
+    categories: ["Planetary", "Conjunction"],
+    location: "Morning sky",
+    description: "Closest approach occurs at a specific time, but it’s a nice pairing all day."
+  }
+];
+
+// ===== Utilities =====
+const fmtTime = (d, opts = {}) =>
+  new Intl.DateTimeFormat(undefined, {
+    dateStyle: opts.dateStyle || undefined,
+    timeStyle: opts.timeStyle || "short",
+    hour12: false
+  }).format(d);
+
+const fmtDate = (d, opts = {}) =>
+  new Intl.DateTimeFormat(undefined, {
+    dateStyle: opts.dateStyle || "medium",
+    timeStyle: opts.timeStyle || undefined
+  }).format(d);
+
+// Parse:
+//  - "YYYY-MM-DD" => local 00:00
+//  - ISO with time/offset => native Date parse
+function parseDateFlexible(s, asEnd = false) {
+  if (typeof s !== "string") return s instanceof Date ? s : null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const [y, m, d] = s.split("-").map(Number);
+    // if end of an all-day, push to end-of-day
+    return asEnd ? new Date(y, m - 1, d, 23, 59, 59, 999) : new Date(y, m - 1, d);
+  }
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+
+// An event "occurs today" if it intersects the [startOfDay, endOfDay] window.
+function overlapsDay(ev, dayStart, dayEnd) {
+  const s = parseDateFlexible(ev.start, false);
+  const e = ev.end ? parseDateFlexible(ev.end, true) : s;
+  if (!s || !e) return false;
+  return (s <= dayEnd) && (e >= dayStart);
+}
+
+// Build category set from EVENTS
+function buildCategorySet() {
+  const set = new Set();
+  for (const e of EVENTS) {
+    (e.categories || []).forEach(c => set.add(c));
+  }
+  return Array.from(set).sort((a,b)=>a.localeCompare(b));
+}
+
+function getQueryDateOverride() {
+  const u = new URL(location.href);
+  const d = u.searchParams.get("date");
+  return /^\d{4}-\d{2}-\d{2}$/.test(d || "") ? d : null;
+}
+
+// ===== Render =====
+function render() {
+  const container = document.getElementById("events");
+  const label = document.getElementById("dateLabel");
+  const nowLabel = document.getElementById("nowLabel");
+  const showAll = document.getElementById("toggleAll").checked;
+  const catFilter = document.getElementById("categoryFilter").value;
+
+  const now = new Date();
+  nowLabel.textContent = fmtDate(now, { dateStyle: "medium" }) + " " + fmtTime(now);
+
+  // Determine "today" (local or overridden)
+  const testInput = document.getElementById("testDate");
+  const override = testInput.value || getQueryDateOverride();
+  let ref = override ? new Date(override + "T12:00:00") : now; // 12:00 avoid DST edge weirdness
+  const dayStart = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate(), 0, 0, 0, 0);
+  const dayEnd   = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate(), 23, 59, 59, 999);
+
+  label.textContent = fmtDate(dayStart, { dateStyle: "full" });
+
+  // Filter + sort
+  let list = EVENTS.slice();
+  if (!showAll) {
+    list = list.filter(ev => overlapsDay(ev, dayStart, dayEnd));
+  }
+  if (catFilter) {
+    list = list.filter(ev => (ev.categories || []).includes(catFilter));
+  }
+  list.sort((a, b) => {
+    const sa = parseDateFlexible(a.start) ?? new Date(8640000000000000);
+    const sb = parseDateFlexible(b.start) ?? new Date(8640000000000000);
+    return sa - sb;
+  });
+
+  // Render
+  container.innerHTML = "";
+  if (!list.length) {
+    const div = document.createElement("div");
+    div.className = "none";
+    div.textContent = showAll
+      ? "No events in the list. Add some in the EVENTS array."
+      : "No events for today from the current list.";
+    container.appendChild(div);
+    return;
+  }
+
+  for (const ev of list) {
+    const s = parseDateFlexible(ev.start, false);
+    const e = ev.end ? parseDateFlexible(ev.end, true) : s;
+
+    const card = document.createElement("article");
+    card.className = "card";
+
+    const title = document.createElement("h3");
+    title.className = "title";
+    title.textContent = ev.title;
+    card.appendChild(title);
+
+    const time = document.createElement("div");
+    time.className = "time";
+
+    if (s && e) {
+      const sameDay = s.toDateString() === e.toDateString();
+      if (sameDay) {
+        // single-day (may be instant or timed)
+        const allDay = /^\d{4}-\d{2}-\d{2}$/.test(ev.start) && /^\d{4}-\d{2}-\d{2}$/.test(ev.end || ev.start);
+        if (allDay) {
+          time.textContent = `${fmtDate(s, { dateStyle: "medium" })} · All day`;
+        } else if (s.getTime() === e.getTime()) {
+          time.textContent = `${fmtDate(s, { dateStyle: "medium" })} · ${fmtTime(s)}`;
+        } else {
+          time.textContent = `${fmtDate(s, { dateStyle: "medium" })} · ${fmtTime(s)}–${fmtTime(e)}`;
+        }
+      } else {
+        // multi-day
+        time.textContent = `${fmtDate(s, { dateStyle: "medium" })} ${fmtTime(s)} → ${fmtDate(e, { dateStyle: "medium" })} ${fmtTime(e)}`;
+      }
+    } else {
+      time.textContent = "Time: tbc";
+    }
+    card.appendChild(time);
+
+    if (ev.location) {
+      const loc = document.createElement("div");
+      loc.className = "loc";
+      loc.textContent = ev.location;
+      card.appendChild(loc);
+    }
+
+    if (ev.categories && ev.categories.length) {
+      const badges = document.createElement("div");
+      badges.className = "badges";
+      for (const c of ev.categories) {
+        const b = document.createElement("span");
+        b.className = "badge";
+        b.textContent = c;
+        badges.appendChild(b);
+      }
+      card.appendChild(badges);
+    }
+
+    if (ev.description) {
+      const desc = document.createElement("div");
+      desc.className = "desc";
+      desc.textContent = ev.description;
+      card.appendChild(desc);
+    }
+
+    if (ev.url) {
+      const link = document.createElement("div");
+      link.className = "desc";
+      link.innerHTML = `<a href="${ev.url}" target="_blank" rel="noopener">More info</a>`;
+      card.appendChild(link);
+    }
+
+    container.appendChild(card);
+  }
+}
+
+// Init category filter and controls
+(function init() {
+  const select = document.getElementById("categoryFilter");
+  for (const cat of buildCategorySet()) {
+    const opt = document.createElement("option");
+    opt.value = cat;
+    opt.textContent = cat;
+    select.appendChild(opt);
+  }
+
+  const qsOverride = getQueryDateOverride();
+  if (qsOverride) {
+    const testDate = document.getElementById("testDate");
+    testDate.value = qsOverride;
+  }
+
+  document.getElementById("toggleAll").addEventListener("change", render);
+  document.getElementById("categoryFilter").addEventListener("change", render);
+  document.getElementById("testDate").addEventListener("change", render);
+
+  render();
+  // refresh the live "Now" label every 60s
+  setInterval(render, 60000);
+})();
+</script>
+</body>
+</html>
