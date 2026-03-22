@@ -1,0 +1,1790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interactive H–R Diagram</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: #0f1d33;
+      --panel-2: #122542;
+      --text: #eaf2ff;
+      --muted: #9db2d1;
+      --grid: rgba(255,255,255,0.08);
+      --accent: #79c7ff;
+      --sun: #ffd76a;
+      --border: rgba(255,255,255,0.12);
+      --shadow: 0 10px 24px rgba(0,0,0,0.28);
+      --good: #83ffb1;
+      --warn: #ffb56e;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top, #10244a 0%, #07111f 45%, #040a13 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      max-width: 1450px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin-bottom: 18px;
+      line-height: 1.45;
+      max-width: 1100px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(460px, 1.65fr) minmax(340px, 0.95fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(6px);
+    }
+
+    .card-head {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .card-head strong {
+      display: block;
+      font-size: 1rem;
+      letter-spacing: 0.02em;
+    }
+
+    .card-head span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.35;
+    }
+
+    .diagram-wrap {
+      padding: 14px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      background:
+        radial-gradient(circle at 25% 20%, rgba(255,255,255,0.06), transparent 24%),
+        linear-gradient(180deg, #091527 0%, #060d18 100%);
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.08);
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 14px;
+      padding: 0 14px 14px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      align-items: center;
+    }
+
+    .playback-row {
+      display: grid;
+      grid-template-columns: 0.9fr 1.25fr 0.9fr 1.3fr;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .slider-wrap {
+      display: grid;
+      gap: 4px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      min-height: 44px;
+    }
+
+    .slider-wrap label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.1;
+    }
+
+    .slider-wrap input[type="range"] {
+      width: 100%;
+      margin: 0;
+    }
+
+    .slider-readout {
+      font-size: 0.78rem;
+      color: rgba(234,242,255,0.9);
+      text-align: right;
+    }
+
+    .toggles {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      align-items: center;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.35;
+    }
+
+    .readouts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 10px;
+      padding: 12px 14px 0;
+    }
+
+    .readout-box {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-size: 0.92rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .readout-box strong { color: var(--text); display:block; margin-bottom:4px; }
+
+    button, select {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, #173158, #102441);
+      color: #ffffff; /* brighter text for readability */
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+      width: 100%;
+    }
+
+    select option {
+      background: #102441; /* dark background for dropdown */
+      color: #ffffff; /* high contrast text */
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+    select { cursor: pointer; }
+
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+      font-size: 0.92rem;
+      min-height: 44px;
+    }
+
+    .check input { transform: scale(1.1); }
+
+    .side {
+      display: grid;
+      gap: 18px;
+    }
+
+    .star-compare {
+      padding: 18px;
+    }
+
+    .comparison-frame {
+      position: relative;
+      height: 420px;
+      overflow: hidden;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      margin-bottom: 14px;
+    }
+
+    
+
+    .comparison-label {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(234,242,255,0.92);
+      font-weight: 700;
+      font-size: 0.92rem;
+      text-align: center;
+      width: 90%;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .comparison-label.sun-label { top: 10px; }
+    .comparison-label.selected-label { bottom: 10px; }
+
+    .comparison-clip-note {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(234,242,255,0.75);
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-align: center;
+      width: 92%;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .comparison-clip-note.sun-note { top: 34px; }
+    .comparison-clip-note.selected-note { bottom: 60px; }
+
+    .star-visual {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      overflow: hidden;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+    }
+
+    .star-visual.sun-slot {
+      top: 8%;
+      height: 34%;
+    }
+
+    .star-visual.selected-slot {
+      bottom: 18%;
+      height: 40%;
+    }
+
+    .star-disc {
+      border-radius: 50%;
+      box-shadow: inset -10px -14px 24px rgba(0,0,0,0.16), inset 10px 10px 18px rgba(255,255,255,0.18);
+      overflow: hidden;
+    }
+
+    .scale-note {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
+    dl {
+      margin: 0;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px 10px;
+      font-size: 0.95rem;
+    }
+
+    dt { color: var(--muted); }
+    dd { margin: 0; font-weight: 650; }
+
+    .legend, .notes, .examples {
+      padding: 16px 18px;
+    }
+
+    .legend-grid, .example-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .swatch {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.2);
+      flex: 0 0 16px;
+    }
+
+    .notes p {
+      margin: 0.4rem 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .mono { font-variant-numeric: tabular-nums; }
+
+    .example-btn {
+      text-align: left;
+      line-height: 1.35;
+      font-size: 0.92rem;
+      padding: 10px 12px;
+    }
+
+    .example-btn span {
+      display: block;
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 0.84rem;
+      margin-top: 3px;
+    }
+
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .toolbar, .toggles, .legend-grid, .example-grid, .readouts { grid-template-columns: 1fr; }
+      .star-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Interactive Hertzsprung–Russell Diagram</h1>
+    <div class="sub">
+      Click or drag on the H–R diagram to create a star with the selected luminosity and temperature. The chosen star is displayed next to the Sun for comparison. You can also show schematic guide regions, spectral type bands, a draggable selection point, and lines of constant stellar radius.
+    </div>
+
+    <div class="layout">
+      <section class="card">
+        <div class="card-head">
+          <strong>H–R Diagram</strong>
+          <span>Temperature decreases to the right, as in the standard astronomical convention. Example stars can be plotted instantly from the panel below.</span>
+        </div>
+        <div class="readouts">
+          <div class="readout-box"><strong>Selected coordinates</strong><span id="coordsReadout" class="mono">T = 5,772 K, L = 1.00 L☉</span></div>
+          <div class="readout-box"><strong>Nearest labelled star</strong><span id="nearestReadout">Sun</span></div>
+        </div>
+        <div class="diagram-wrap">
+          <canvas id="hrCanvas" width="980" height="720" aria-label="Interactive HR diagram"></canvas>
+        </div>
+        <div class="controls">
+          <div class="stack">
+            <div class="toolbar">
+              <button id="sunBtn">Jump to Sun</button>
+              <button id="randomBtn">Random Star</button>
+              <button id="mainSeqBtn">Random Main Sequence</button>
+              <button id="evolveBtn">Evolve Selected Star</button>
+            </div>
+            <div class="toolbar" style="grid-template-columns: 1.2fr 1fr 1fr 1fr;">
+              <select id="radiusPreset">
+                <option value="">Radius lines…</option>
+                <option value="all">Show common set</option>
+                <option value="off">Hide radius lines</option>
+                <option value="0.01">0.01 R☉</option>
+                <option value="0.1">0.1 R☉</option>
+                <option value="1">1 R☉</option>
+                <option value="10">10 R☉</option>
+                <option value="100">100 R☉</option>
+                <option value="1000">1000 R☉</option>
+              </select>
+              <select id="trackPreset">
+                <option value="">Evolution tracks…</option>
+                <option value="off">Hide tracks</option>
+                <option value="all">Show preset masses</option>
+                <option value="0.8">0.8 M☉</option>
+                <option value="1">1 M☉</option>
+                <option value="2">2 M☉</option>
+                <option value="5">5 M☉</option>
+                <option value="10">10 M☉</option>
+              </select>
+              <button id="resetAnimBtn">Reset Path</button>
+              <button id="stopAnimBtn">Stop</button>
+            </div>
+            <div class="playback-row">
+              <button id="playPauseBtn">Pause</button>
+              <div class="slider-wrap">
+                <label for="evolutionSlider">Evolution position</label>
+                <input id="evolutionSlider" type="range" min="0" max="1000" step="1" value="0" />
+                <div class="slider-readout" id="evolutionReadout">0%</div>
+              </div>
+              <select id="speedSelect">
+                <option value="0.5">0.5× speed</option>
+                <option value="1">1× speed</option>
+                <option value="2" selected>2× slower</option>
+                <option value="3">3× slower</option>
+                <option value="4">4× slower</option>
+              </select>
+              <div class="slider-wrap">
+                <label for="ageReadout">Approx. evolution stage</label>
+                <div class="slider-readout" id="ageReadout" style="text-align:left; font-size:0.84rem;">Not animating</div>
+              </div>
+            </div>
+            <div class="toggles">
+              <label class="check"><input type="checkbox" id="guidesCheck" checked /> Guide regions</label>
+              <label class="check"><input type="checkbox" id="spectralCheck" checked /> Spectral bands</label>
+              <label class="check"><input type="checkbox" id="radiusCheck" /> Constant-radius lines</label>
+              <label class="check"><input type="checkbox" id="trackCheck" /> Evolution tracks</label>
+              <label class="check"><input type="checkbox" id="variablesOnlyCheck" /> Variable stars only</label>
+            </div>
+          </div>
+          <div class="hint">
+            Drag the selection point to explore continuously. Radius lines follow the Stefan–Boltzmann relation and help show why giant stars lie high and cool, while white dwarfs lie hot and faint.
+          </div>
+        </div>
+      </section>
+
+      <div class="side">
+        <section class="card">
+          <div class="card-head">
+            <strong>Selected Star vs Sun</strong>
+            <span>The Sun and selected star are shown inside one shared comparison frame. When a star is too large to fit, it is not shrunk — only the visible portion of the disc is shown. The stars themselves are drawn directly on the shared background, without inner boxes.</span>
+          </div>
+          <div class="star-compare">
+            <div class="comparison-frame">
+              
+              <div class="comparison-label sun-label">Sun</div>
+              <div class="comparison-clip-note sun-note" id="sunClipNote"></div>
+              <div class="star-visual sun-slot" id="sunVisual"></div>
+
+              <div class="comparison-clip-note selected-note" id="selectedClipNote"></div>
+              <div class="star-visual selected-slot" id="selectedVisual"></div>
+              <div class="comparison-label selected-label" id="selectedTitle">Selected Star</div>
+            </div>
+            <dl>
+              <dt>Temperature</dt><dd id="selTemp"></dd>
+              <dt>Luminosity</dt><dd id="selLum"></dd>
+              <dt>Radius</dt><dd id="selRadius"></dd>
+              <dt>Colour class</dt><dd id="selClass"></dd>
+              <dt>Likely region</dt><dd id="selRegion"></dd>
+              <dt>Nearest example</dt><dd id="selNearest"></dd>
+            </dl>
+            <div class="scale-note" id="scaleNote">Visual size scale: Sun = baseline</div>
+          </div>
+        </section>
+
+        <section class="card examples">
+          <div class="card-head">
+            <strong>Named example stars</strong>
+            <span>Click a star to jump to an approximate position on the diagram.</span>
+          </div>
+          <div class="example-grid" id="exampleGrid"></div>
+        </section>
+
+        <section class="card legend">
+          <div class="card-head">
+            <strong>Guide regions</strong>
+            <span>These are schematic rather than strict observational boundaries.</span>
+          </div>
+          <div class="legend-grid">
+            <div class="legend-item"><span class="swatch" style="background:#7fc1ff"></span> White dwarfs</div>
+            <div class="legend-item"><span class="swatch" style="background:#83ffb1"></span> Main sequence</div>
+            <div class="legend-item"><span class="swatch" style="background:#ffb56e"></span> Giants</div>
+            <div class="legend-item"><span class="swatch" style="background:#ff86d0"></span> Supergiants</div>
+          </div>
+        </section>
+
+        <section class="card notes">
+          <div class="card-head">
+            <strong>How the properties are estimated</strong>
+            <span>The widget uses simple astrophysical approximations suitable for teaching and outreach.</span>
+          </div>
+          <p><strong>Radius:</strong> computed from the Stefan–Boltzmann relation in solar units, \(L/L_\odot = (R/R_\odot)^2 (T/T_\odot)^4\).</p>
+          <p><strong>Colour:</strong> estimated from temperature using a smooth blackbody-inspired mapping.</p>
+          <p><strong>Constant-radius lines:</strong> plotted from \(L/L_\odot = (R/R_\odot)^2 (T/T_\odot)^4\), so on a log-luminosity scale they form sloping lines.</p>
+          <p><strong>Nearest example:</strong> found by comparing your chosen point to the stored example stars in log-temperature and log-luminosity space.</p>
+          <p><strong>Important:</strong> not every clicked point corresponds to a physically common or stable star, but it is useful for exploring the diagram.</p>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('hrCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const coordsReadout = document.getElementById('coordsReadout');
+    const nearestReadout = document.getElementById('nearestReadout');
+    const selectedTitle = document.getElementById('selectedTitle');
+    const selTemp = document.getElementById('selTemp');
+    const selLum = document.getElementById('selLum');
+    const selRadius = document.getElementById('selRadius');
+    const selClass = document.getElementById('selClass');
+    const selRegion = document.getElementById('selRegion');
+    const selNearest = document.getElementById('selNearest');
+    const selectedVisual = document.getElementById('selectedVisual');
+    const sunVisual = document.getElementById('sunVisual');
+    const selectedClipNote = document.getElementById('selectedClipNote');
+    const sunClipNote = document.getElementById('sunClipNote');
+    const scaleNote = document.getElementById('scaleNote');
+    const exampleGrid = document.getElementById('exampleGrid');
+
+    const sunBtn = document.getElementById('sunBtn');
+    const randomBtn = document.getElementById('randomBtn');
+    const mainSeqBtn = document.getElementById('mainSeqBtn');
+    const radiusPreset = document.getElementById('radiusPreset');
+    const trackPreset = document.getElementById('trackPreset');
+    const evolveBtn = document.getElementById('evolveBtn');
+    const resetAnimBtn = document.getElementById('resetAnimBtn');
+    const stopAnimBtn = document.getElementById('stopAnimBtn');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const evolutionSlider = document.getElementById('evolutionSlider');
+    const evolutionReadout = document.getElementById('evolutionReadout');
+    const speedSelect = document.getElementById('speedSelect');
+    const ageReadout = document.getElementById('ageReadout');
+    const guidesCheck = document.getElementById('guidesCheck');
+    const spectralCheck = document.getElementById('spectralCheck');
+    const radiusCheck = document.getElementById('radiusCheck');
+    const trackCheck = document.getElementById('trackCheck');
+    const variablesOnlyCheck = document.getElementById('variablesOnlyCheck');
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const pad = { left: 88, right: 28, top: 48, bottom: 78 };
+    const plot = {
+      x: pad.left,
+      y: pad.top,
+      w: W - pad.left - pad.right,
+      h: H - pad.top - pad.bottom
+    };
+
+    const T_MIN = 2500;
+    const T_MAX = 30000;
+    const LOG_L_MIN = -4;
+    const LOG_L_MAX = 6;
+    const T_SUN = 5772;
+    const COMMON_RADIUS_LINES = [0.01, 0.1, 1, 10, 100, 1000];
+
+    const exampleStars = [
+      { name: 'Sun', T: 5772, logL: 0, note: 'G2V main-sequence star' },
+      { name: 'Sirius A', T: 9940, logL: Math.log10(25.4), note: 'bright A-type main sequence' },
+      { name: 'Vega', T: 9600, logL: Math.log10(40.1), note: 'A-type main sequence' },
+      { name: 'Rigel', T: 12100, logL: 5.08, note: 'blue supergiant' },
+      { name: 'Betelgeuse', T: 3500, logL: 5.1, note: 'red supergiant' },
+      { name: 'Proxima Cen', T: 3042, logL: Math.log10(0.0017), note: 'red dwarf' },
+      { name: 'Aldebaran', T: 3900, logL: Math.log10(439), note: 'orange giant' },
+      { name: 'Spica', T: 22000, logL: 4.1, note: 'hot blue star' },
+      { name: 'Polaris', T: 6000, logL: 3.8, note: 'supergiant / Cepheid' },
+      { name: 'Sirius B', T: 25200, logL: Math.log10(0.026), note: 'white dwarf' }
+    ];
+
+    let showGuides = true;
+    let showSpectral = true;
+    let showRadiusLines = false;
+    let showTracks = false;
+    let activeRadiusLines = [...COMMON_RADIUS_LINES];
+    let activeTrackMasses = [1, 2, 5, 10];
+    let selectedStar = { T: T_SUN, logL: 0 };
+    let dragging = false;
+    let animationHandle = null;
+    let animatedPath = [];
+    let animatedMass = null;
+    let showVariablesOnly = false;
+    let animationTick = 0;
+    let playbackPaused = false;
+    let currentTrack = [];
+    let currentTrackIndex = 0;
+    let currentTrackStartIndex = 0;
+    let currentHoldFrames = 0;
+    let frameCounter = 0;
+    let speedFactor = 2;
+
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function invLerp(a, b, v) { return (v - a) / (b - a); }
+
+    function formatK(T) { return Math.round(T).toLocaleString() + ' K'; }
+
+    function formatLum(L) {
+      if (L >= 1000) return L.toExponential(2).replace('e+', '×10^') + ' L☉';
+      if (L >= 10) return L.toFixed(1) + ' L☉';
+      if (L >= 0.1) return L.toFixed(2) + ' L☉';
+      return L.toPrecision(2) + ' L☉';
+    }
+
+    function formatRadius(R) {
+      if (R >= 1000) return R.toFixed(0) + ' R☉';
+      if (R >= 100) return R.toFixed(1) + ' R☉';
+      if (R >= 10) return R.toFixed(2) + ' R☉';
+      if (R >= 1) return R.toFixed(2) + ' R☉';
+      return R.toPrecision(2) + ' R☉';
+    }
+
+    function tempToX(T) {
+      const t = invLerp(Math.log10(T_MAX), Math.log10(T_MIN), Math.log10(T));
+      return plot.x + t * plot.w;
+    }
+
+    function logLToY(logL) {
+      const t = invLerp(LOG_L_MAX, LOG_L_MIN, logL);
+      return plot.y + t * plot.h;
+    }
+
+    function xToTemp(x) {
+      const t = clamp((x - plot.x) / plot.w, 0, 1);
+      const logT = lerp(Math.log10(T_MAX), Math.log10(T_MIN), t);
+      return 10 ** logT;
+    }
+
+    function yToLogL(y) {
+      const t = clamp((y - plot.y) / plot.h, 0, 1);
+      return lerp(LOG_L_MAX, LOG_L_MIN, t);
+    }
+
+    function lumFromLog(logL) { return 10 ** logL; }
+
+    function radiusSolar(T, L) {
+      return Math.sqrt(L / ((T / T_SUN) ** 4));
+    }
+
+    function logLForRadius(T, R) {
+      return Math.log10((R * R) * ((T / T_SUN) ** 4));
+    }
+
+    function tempToColor(tempK) {
+      const T = clamp(tempK, 2500, 40000);
+      const stops = [
+        { T: 2500, c: [255, 120, 80] },
+        { T: 3200, c: [255, 150, 105] },
+        { T: 4000, c: [255, 185, 120] },
+        { T: 5000, c: [255, 214, 120] },
+        { T: 5772, c: [255, 232, 140] },
+        { T: 6500, c: [255, 245, 236] },
+        { T: 8000, c: [255, 248, 245] },
+        { T: 9600, c: [255, 250, 248] },
+        { T: 12000, c: [235, 242, 255] },
+        { T: 20000, c: [195, 220, 255] },
+        { T: 30000, c: [170, 205, 255] },
+        { T: 40000, c: [160, 195, 255] }
+      ];
+      let a = stops[0], b = stops[stops.length - 1];
+      for (let i = 0; i < stops.length - 1; i++) {
+        if (T >= stops[i].T && T <= stops[i + 1].T) {
+          a = stops[i];
+          b = stops[i + 1];
+          break;
+        }
+      }
+      const u = invLerp(a.T, b.T, T);
+      const rgb = a.c.map((v, i) => Math.round(lerp(v, b.c[i], u)));
+      return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+    }
+
+    function spectralText(T) {
+      if (T >= 30000) return 'O-type / blue';
+      if (T >= 10000) return 'B-type / blue-white';
+      if (T >= 7500) return 'A-type / white';
+      if (T >= 6000) return 'F-type / yellow-white';
+      if (T >= 5200) return 'G-type / yellow-white';
+      if (T >= 3700) return 'K-type / orange';
+      return 'M-type / red';
+    }
+
+    function classifyRegion(T, logL) {
+      const lx = Math.log10(T);
+      const msCenter = 7.5 * (lx - Math.log10(5800));
+      if (logL > 3.8) return 'Supergiant region';
+      if (logL > 1.3 && T < 7500) return 'Giant region';
+      if (logL < 0.7 && T > 7000 && logL < (3.2 * (lx - 4.0) - 1.2)) return 'White dwarf region';
+      if (Math.abs(logL - msCenter) < 1.0) return 'Main sequence';
+      if (logL > 1.0) return 'Above the main sequence';
+      if (logL < -1.2) return 'Below the main sequence';
+      return 'Intermediate region';
+    }
+
+    function nearestExample(T, logL) {
+      let best = exampleStars[0];
+      let bestD = Infinity;
+      for (const s of exampleStars) {
+        const dT = Math.log10(T) - Math.log10(s.T);
+        const dL = logL - s.logL;
+        const d = dT * dT * 5 + dL * dL;
+        if (d < bestD) { bestD = d; best = s; }
+      }
+      return best;
+    }
+
+    function inferMassFromSelectedStar(T, logL) {
+      const L = 10 ** logL;
+      const region = classifyRegion(T, logL);
+      if (region !== 'Main sequence') {
+        return clamp(Math.pow(Math.max(L, 0.03), 1 / 3.5), 0.5, 12);
+      }
+      return clamp(Math.pow(Math.max(L, 0.03), 1 / 3.7), 0.5, 12);
+    }
+
+    function stellarTrackForMass(mass, steps = 220) {
+      const track = [];
+      const Tms = clamp(5772 * Math.pow(mass, 0.48), 3000, 30000);
+      const Lms = Math.pow(mass, 3.7);
+      const logLms = Math.log10(Lms);
+      const giantPeak = mass < 2 ? 3.2 + 0.35 * Math.log10(mass + 0.2) : 3.7 + 0.9 * Math.log10(mass);
+      const finalT = mass < 8 ? clamp(9000 + 15000 / Math.sqrt(mass + 0.3), 8000, 28000) : clamp(4500 + 2200 * Math.log10(mass + 1), 4200, 8000);
+      const finalLogL = mass < 8 ? clamp(-2.4 + 0.8 * Math.log10(mass + 0.2), -2.6, 0.3) : clamp(4.5 + 0.55 * Math.log10(mass), 4.3, 5.9);
+
+      for (let i = 0; i <= steps; i++) {
+        const u = i / steps;
+        let T, logL, phase;
+        if (u < 0.5) {
+          const s = u / 0.5;
+          T = Tms * (1 + 0.06 * s);
+          logL = logLms + 0.18 * s;
+          phase = 'Main sequence';
+        } else if (u < 0.68) {
+          const s = (u - 0.5) / 0.18;
+          T = lerp(Tms * 1.06, clamp(4300 + 900 / Math.sqrt(mass), 3900, 6500), Math.pow(s, 0.78));
+          logL = lerp(logLms + 0.18, giantPeak * 0.72, Math.pow(s, 0.9));
+          phase = mass < 8 ? 'Subgiant / red giant branch' : 'Blue supergiant transition';
+        } else if (u < 0.82) {
+          const s = (u - 0.68) / 0.14;
+          T = lerp(clamp(4300 + 900 / Math.sqrt(mass), 3900, 6500), clamp(3400 + 1800 / Math.sqrt(mass), 3200, 6500), Math.pow(s, 0.88));
+          logL = lerp(giantPeak * 0.72, giantPeak, Math.pow(s, 0.92));
+          phase = mass < 8 ? 'Red giant / helium burning' : 'Red supergiant expansion';
+        } else if (u < 0.96) {
+          const s = (u - 0.82) / 0.14;
+          T = lerp(clamp(3400 + 1800 / Math.sqrt(mass), 3200, 6500), finalT, Math.pow(s, 0.72));
+          logL = lerp(giantPeak, finalLogL, Math.pow(s, 0.9));
+          phase = mass < 8 ? 'Planetary nebula precursor' : 'Core-collapse precursor';
+        } else {
+          const s = (u - 0.96) / 0.04;
+          if (mass < 8) {
+            T = lerp(finalT * 0.96, finalT, s);
+            logL = lerp(finalLogL + 0.2, finalLogL, s);
+            phase = 'White dwarf remnant';
+          } else {
+            T = lerp(finalT, finalT * 0.94, s);
+            logL = lerp(finalLogL, finalLogL + 0.28, Math.pow(s, 0.5));
+            phase = 'Supernova imminent';
+          }
+        }
+        track.push({ T: clamp(T, T_MIN, T_MAX), logL: clamp(logL, LOG_L_MIN, LOG_L_MAX), phase, u, mass });
+      }
+      return track;
+    }
+
+    function phaseMarkersForTrack(track, mass) {
+      const desired = mass < 8
+        ? [
+            { u: 0.16, label: 'Main sequence' },
+            { u: 0.60, label: 'Red giant' },
+            { u: 0.83, label: 'Planetary nebula' },
+            { u: 0.98, label: 'White dwarf' }
+          ]
+        : [
+            { u: 0.16, label: 'Main sequence' },
+            { u: 0.60, label: 'Supergiant' },
+            { u: 0.90, label: 'Core collapse' },
+            { u: 0.995, label: 'Supernova' }
+          ];
+      return desired.map(m => {
+        const idx = Math.max(0, Math.min(track.length - 1, Math.round(m.u * (track.length - 1))));
+        return { ...track[idx], label: m.label };
+      });
+    }
+
+    function drawBackgroundStars() {
+      for (let i = 0; i < 95; i++) {
+        const x = (Math.sin(i * 127.1) * 43758.5453 % 1 + 1) % 1;
+        const y = (Math.sin(i * 311.7) * 12345.6789 % 1 + 1) % 1;
+        const r = 0.5 + (((Math.sin(i * 19.3) * 9876.543) % 1 + 1) % 1) * 1.4;
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(255,255,255,${0.12 + r * 0.11})`;
+        ctx.arc(x * W, y * H, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawRegion(points, fill, stroke) {
+      ctx.beginPath();
+      ctx.moveTo(points[0][0], points[0][1]);
+      for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+      ctx.closePath();
+      ctx.fillStyle = fill;
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1.5;
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    function regionPolygons() {
+      return {
+        supergiants: [
+          [tempToX(30000), logLToY(5.8)], [tempToX(15000), logLToY(5.2)], [tempToX(7000), logLToY(4.7)],
+          [tempToX(3000), logLToY(4.3)], [tempToX(2500), logLToY(4.6)], [tempToX(2500), logLToY(6.0)], [tempToX(30000), logLToY(6.0)]
+        ],
+        giants: [
+          [tempToX(6300), logLToY(3.1)], [tempToX(5100), logLToY(2.8)], [tempToX(3900), logLToY(2.1)],
+          [tempToX(3300), logLToY(1.2)], [tempToX(3800), logLToY(0.8)], [tempToX(5200), logLToY(1.4)], [tempToX(6500), logLToY(2.1)]
+        ],
+        whiteDwarfs: [
+          [tempToX(25000), logLToY(0.1)], [tempToX(15000), logLToY(-0.4)], [tempToX(9000), logLToY(-1.2)],
+          [tempToX(6500), logLToY(-2.1)], [tempToX(8500), logLToY(-3.4)], [tempToX(18000), logLToY(-2.6)], [tempToX(28000), logLToY(-1.1)]
+        ],
+        mainSequence: [
+          [tempToX(30000), logLToY(5.1)], [tempToX(18000), logLToY(3.6)], [tempToX(10000), logLToY(1.8)],
+          [tempToX(7500), logLToY(0.9)], [tempToX(5800), logLToY(0.0)], [tempToX(4500), logLToY(-0.9)],
+          [tempToX(3400), logLToY(-2.2)], [tempToX(2700), logLToY(-3.3)], [tempToX(3200), logLToY(-2.0)],
+          [tempToX(4100), logLToY(-0.7)], [tempToX(5400), logLToY(0.2)], [tempToX(7600), logLToY(1.2)],
+          [tempToX(12000), logLToY(2.7)], [tempToX(22000), logLToY(4.5)]
+        ],
+        instabilityStrip: [
+          [tempToX(7600), logLToY(3.7)], [tempToX(6100), logLToY(3.7)],
+          [tempToX(6100), logLToY(-0.6)], [tempToX(7600), logLToY(-0.6)]
+        ]
+      };
+    }
+
+    function drawSpectralBands() {
+      if (!showSpectral) return;
+      const bands = [
+        { label: 'O', t1: 30000, t2: 25000, color: 'rgba(138, 186, 255, 0.18)' },
+        { label: 'B', t1: 25000, t2: 10000, color: 'rgba(175, 210, 255, 0.14)' },
+        { label: 'A', t1: 10000, t2: 7500, color: 'rgba(235, 242, 255, 0.13)' },
+        { label: 'F', t1: 7500, t2: 6000, color: 'rgba(255, 244, 220, 0.12)' },
+        { label: 'G', t1: 6000, t2: 5200, color: 'rgba(255, 226, 160, 0.12)' },
+        { label: 'K', t1: 5200, t2: 3700, color: 'rgba(255, 180, 120, 0.12)' },
+        { label: 'M', t1: 3700, t2: 2500, color: 'rgba(255, 120, 95, 0.12)' }
+      ];
+      ctx.save();
+      ctx.font = 'bold 13px Inter, Segoe UI, sans-serif';
+      ctx.textAlign = 'center';
+      for (const b of bands) {
+        const x1 = tempToX(b.t1);
+        const x2 = tempToX(b.t2);
+        const left = Math.min(x1, x2);
+        const width = Math.abs(x2 - x1);
+        ctx.fillStyle = b.color;
+        ctx.fillRect(left, plot.y, width, 24);
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.strokeRect(left, plot.y, width, 24);
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.fillText(b.label, left + width / 2, plot.y + 16);
+      }
+      ctx.restore();
+    }
+
+    function drawAxes() {
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(plot.x, plot.y, plot.w, plot.h);
+
+      ctx.font = '13px Inter, Segoe UI, sans-serif';
+      ctx.fillStyle = 'rgba(234,242,255,0.82)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 1;
+
+      const tempTicks = [30000, 20000, 10000, 7500, 6000, 5000, 4000, 3000, 2500];
+      tempTicks.forEach(T => {
+        const x = tempToX(T);
+        ctx.beginPath();
+        ctx.moveTo(x, plot.y);
+        ctx.lineTo(x, plot.y + plot.h);
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(x, plot.y + plot.h);
+        ctx.lineTo(x, plot.y + plot.h + 7);
+        ctx.strokeStyle = 'rgba(255,255,255,0.20)';
+        ctx.stroke();
+
+        ctx.textAlign = 'center';
+        ctx.fillText((T >= 10000 ? (T/1000).toFixed(0) + 'k' : T.toString()), x, plot.y + plot.h + 24);
+      });
+
+      for (let logL = -4; logL <= 6; logL++) {
+        const y = logLToY(logL);
+        ctx.beginPath();
+        ctx.moveTo(plot.x, y);
+        ctx.lineTo(plot.x + plot.w, y);
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(plot.x - 7, y);
+        ctx.lineTo(plot.x, y);
+        ctx.strokeStyle = 'rgba(255,255,255,0.20)';
+        ctx.stroke();
+
+        ctx.textAlign = 'right';
+        ctx.fillText(logL.toString(), plot.x - 12, y + 4);
+      }
+
+      ctx.save();
+      ctx.font = '15px Inter, Segoe UI, sans-serif';
+      ctx.fillStyle = '#eaf2ff';
+      ctx.textAlign = 'center';
+      ctx.fillText('Surface temperature (K)  → decreasing to the right', plot.x + plot.w / 2, H - 24);
+      ctx.translate(24, plot.y + plot.h / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText('Luminosity  log₁₀(L / L☉)', 0, 0);
+      ctx.restore();
+    }
+
+    function drawLabels() {
+      if (!showGuides) return;
+      ctx.save();
+      ctx.font = 'bold 18px Inter, Segoe UI, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(255,255,255,0.82)';
+      ctx.fillText('SUPERGIANTS', tempToX(7000), logLToY(5.25));
+      ctx.fillText('GIANTS', tempToX(4700), logLToY(2.0));
+      ctx.fillText('WHITE DWARFS', tempToX(15000), logLToY(-1.8));
+
+      ctx.save();
+      ctx.translate(tempToX(7200), logLToY(0.35));
+      ctx.rotate(0.78);
+      ctx.fillStyle = 'rgba(255,255,255,0.78)';
+      ctx.fillText('MAIN SEQUENCE', 0, 0);
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(tempToX(6850), logLToY(1.65));
+      ctx.rotate(Math.PI / 2);
+      ctx.fillStyle = 'rgba(255,245,185,0.88)';
+      ctx.font = 'bold 15px Inter, Segoe UI, sans-serif';
+      ctx.fillText('INSTABILITY STRIP', 0, 0);
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    function drawGuideRegions() {
+      if (!showGuides) return;
+      const polys = regionPolygons();
+      drawRegion(polys.supergiants, 'rgba(255, 134, 208, 0.16)', 'rgba(255, 134, 208, 0.35)');
+      drawRegion(polys.giants, 'rgba(255, 181, 110, 0.16)', 'rgba(255, 181, 110, 0.35)');
+      drawRegion(polys.whiteDwarfs, 'rgba(127, 193, 255, 0.16)', 'rgba(127, 193, 255, 0.35)');
+      drawRegion(polys.mainSequence, 'rgba(131, 255, 177, 0.13)', 'rgba(131, 255, 177, 0.35)');
+      // Instability strip
+      drawRegion(polys.instabilityStrip, 'rgba(255,255,180,0.12)', 'rgba(255,255,180,0.35)');
+    }
+
+    function mulberry32(seed) {
+      return function() {
+        let t = seed += 0x6D2B79F5;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function gaussian(rand) {
+      let u = 0, v = 0;
+      while (u === 0) u = rand();
+      while (v === 0) v = rand();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    }
+
+    function samplePopulationBand(pts, cfg, rand) {
+      const {
+        count,
+        logTMin,
+        logTMax,
+        centerFn,
+        sigmaParallel = 0.02,
+        sigmaPerp = 0.12,
+        sizeMin = 1.4,
+        sizeMax = 2.6,
+        alphaMin = 0.28,
+        alphaMax = 0.78,
+        weightHot = 1,
+        weightCool = 1
+      } = cfg;
+
+      const dLogT = logTMax - logTMin;
+      for (let i = 0; i < count; i++) {
+        const uBase = rand();
+        const biasPow = lerp(weightHot, weightCool, uBase);
+        const u = Math.pow(uBase, biasPow);
+        const logT0 = lerp(logTMin, logTMax, u);
+        const logL0 = centerFn(logT0, u);
+
+        const epsPar = gaussian(rand) * sigmaParallel;
+        const localSlope = (
+          centerFn(clamp(logT0 + 0.002, logTMin, logTMax), u) -
+          centerFn(clamp(logT0 - 0.002, logTMin, logTMax), u)
+        ) / 0.004;
+
+        const normX = -localSlope;
+        const normY = 1;
+        const normLen = Math.hypot(normX, normY) || 1;
+        const perp = gaussian(rand) * sigmaPerp;
+
+        const logT = logT0 + epsPar + (perp * normX / normLen) * 0.12;
+        const logL = logL0 + (perp * normY / normLen);
+
+        if (logL < LOG_L_MIN - 0.3 || logL > LOG_L_MAX + 0.3) continue;
+
+        pts.push({
+          T: 10 ** clamp(logT, Math.log10(T_MIN), Math.log10(T_MAX)),
+          logL,
+          r: lerp(sizeMin, sizeMax, rand()),
+          a: lerp(alphaMin, alphaMax, rand())
+        });
+      }
+    }
+
+    function generatePopulation() {
+      const rand = mulberry32(123456789);
+      const pts = [];
+
+      samplePopulationBand(pts, {
+        count: 1100,
+        logTMin: Math.log10(2800),
+        logTMax: Math.log10(30000),
+        centerFn: (logT) => 7.2 * (logT - Math.log10(5800)) - 0.02,
+        sigmaParallel: 0.018,
+        sigmaPerp: 0.10,
+        sizeMin: 1.2,
+        sizeMax: 2.3,
+        alphaMin: 0.24,
+        alphaMax: 0.72,
+        weightHot: 0.85,
+        weightCool: 2.0
+      }, rand);
+
+      samplePopulationBand(pts, {
+        count: 170,
+        logTMin: Math.log10(3300),
+        logTMax: Math.log10(6500),
+        centerFn: (logT) => lerp(1.0, 3.0, invLerp(Math.log10(3300), Math.log10(6500), logT)) + 0.12,
+        sigmaParallel: 0.02,
+        sigmaPerp: 0.16,
+        sizeMin: 1.9,
+        sizeMax: 3.0,
+        alphaMin: 0.28,
+        alphaMax: 0.74,
+        weightHot: 1.2,
+        weightCool: 0.95
+      }, rand);
+
+      samplePopulationBand(pts, {
+        count: 90,
+        logTMin: Math.log10(3400),
+        logTMax: Math.log10(22000),
+        centerFn: (logT) => lerp(4.25, 5.35, invLerp(Math.log10(3400), Math.log10(22000), logT)),
+        sigmaParallel: 0.025,
+        sigmaPerp: 0.18,
+        sizeMin: 2.3,
+        sizeMax: 3.5,
+        alphaMin: 0.32,
+        alphaMax: 0.80,
+        weightHot: 1.0,
+        weightCool: 1.1
+      }, rand);
+
+      samplePopulationBand(pts, {
+        count: 220,
+        logTMin: Math.log10(7000),
+        logTMax: Math.log10(26000),
+        centerFn: (logT) => lerp(-3.15, -0.45, invLerp(Math.log10(7000), Math.log10(26000), logT)),
+        sigmaParallel: 0.018,
+        sigmaPerp: 0.11,
+        sizeMin: 1.2,
+        sizeMax: 2.1,
+        alphaMin: 0.26,
+        alphaMax: 0.70,
+        weightHot: 1.0,
+        weightCool: 1.0
+      }, rand);
+
+      return pts;
+    }
+
+    const stellarPopulation = generatePopulation();
+
+    function makeInstabilityStars() {
+      const rand = mulberry32(987654321);
+      const pts = [];
+      for (let i = 0; i < 36; i++) {
+        const T = lerp(6100, 7600, rand());
+        const logL = lerp(-0.3, 3.4, rand());
+        pts.push({
+          T,
+          logL,
+          r: lerp(1.8, 3.0, rand()),
+          phase: rand() * Math.PI * 2,
+          amp: lerp(0.18, 0.42, rand()),
+          speed: lerp(0.8, 1.6, rand())
+        });
+      }
+      return pts;
+    }
+
+    const instabilityStars = makeInstabilityStars();
+
+    function drawSamplePopulation() {
+      if (!showVariablesOnly) {
+        for (const s of stellarPopulation) {
+          const x = tempToX(s.T), y = logLToY(s.logL);
+          if (x < plot.x || x > plot.x + plot.w || y < plot.y || y > plot.y + plot.h) continue;
+          const color = tempToColor(s.T);
+          ctx.beginPath();
+          ctx.fillStyle = color;
+          ctx.globalAlpha = s.a ?? 0.55;
+          ctx.arc(x, y, s.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      instabilityStars.forEach((s) => {
+        const x = tempToX(s.T), y = logLToY(s.logL);
+        const pulse = 0.55 + 0.45 * Math.sin(animationTick * 0.06 * s.speed + s.phase);
+        const radius = s.r * (0.9 + s.amp * pulse);
+        const glow = ctx.createRadialGradient(x, y, 0.2, x, y, radius * 3.2);
+        glow.addColorStop(0, 'rgba(255,255,240,0.95)');
+        glow.addColorStop(0.3, 'rgba(255,240,170,0.65)');
+        glow.addColorStop(1, 'rgba(255,240,170,0)');
+        ctx.beginPath();
+        ctx.fillStyle = glow;
+        ctx.globalAlpha = 0.55 + 0.2 * pulse;
+        ctx.arc(x, y, radius * 3.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.fillStyle = 'rgb(255,245,180)';
+        ctx.globalAlpha = 0.78 + 0.18 * pulse;
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    function drawRadiusLines() {
+      if (!showRadiusLines || !activeRadiusLines.length) return;
+      ctx.save();
+      ctx.setLineDash([6, 5]);
+      ctx.font = '12px Inter, Segoe UI, sans-serif';
+      ctx.textAlign = 'left';
+      activeRadiusLines.forEach((R, idx) => {
+        ctx.beginPath();
+        let started = false;
+        for (let i = 0; i <= 220; i++) {
+          const T = 10 ** lerp(Math.log10(T_MAX), Math.log10(T_MIN), i / 220);
+          const logL = logLForRadius(T, R);
+          if (logL < LOG_L_MIN || logL > LOG_L_MAX) continue;
+          const x = tempToX(T), y = logLToY(logL);
+          if (!started) { ctx.moveTo(x, y); started = true; } else { ctx.lineTo(x, y); }
+        }
+        ctx.strokeStyle = `rgba(255,255,255,${0.18 + idx * 0.06})`;
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+
+        const labelT = clamp(4300 + idx * 350, T_MIN, T_MAX);
+        const labelLogL = logLForRadius(labelT, R);
+        if (labelLogL > LOG_L_MIN && labelLogL < LOG_L_MAX) {
+          const lx = tempToX(labelT);
+          const ly = logLToY(labelLogL);
+          ctx.fillStyle = 'rgba(255,255,255,0.82)';
+          ctx.fillText(`${R} R☉`, lx + 6, ly - 6);
+        }
+      });
+      ctx.restore();
+    }
+
+    function drawEvolutionTracks() {
+      if (!showTracks || !activeTrackMasses.length) return;
+      ctx.save();
+      ctx.setLineDash([]);
+      ctx.lineWidth = 2.1;
+      ctx.font = '12px Inter, Segoe UI, sans-serif';
+      activeTrackMasses.forEach((mass, idx) => {
+        const track = stellarTrackForMass(mass, 170);
+        ctx.beginPath();
+        track.forEach((p, i) => {
+          const x = tempToX(p.T);
+          const y = logLToY(p.logL);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        const alpha = 0.34 + idx * 0.11;
+        ctx.strokeStyle = `rgba(255,255,255,${Math.min(alpha, 0.82)})`;
+        ctx.stroke();
+
+        const p = track[Math.floor(track.length * 0.58)];
+        const lx = tempToX(p.T);
+        const ly = logLToY(p.logL);
+        ctx.fillStyle = 'rgba(255,255,255,0.86)';
+        ctx.fillText(`${mass} M☉`, lx + 6, ly - 6);
+
+        const markers = phaseMarkersForTrack(track, mass);
+        markers.forEach((m, mi) => {
+          const x = tempToX(m.T), y = logLToY(m.logL);
+          ctx.beginPath();
+          ctx.fillStyle = mass < 8 ? 'rgba(180, 230, 255, 0.92)' : 'rgba(255, 180, 120, 0.95)';
+          ctx.arc(x, y, 3.3, 0, Math.PI * 2);
+          ctx.fill();
+          if (mi < markers.length - 1 || mass < 8) {
+            ctx.fillStyle = 'rgba(255,255,255,0.86)';
+            ctx.fillText(m.label, x + 7, y - 7);
+          }
+        });
+      });
+      ctx.restore();
+    }
+
+    function drawSupernovaBurst(point, pulse = 1) {
+      const x = tempToX(point.T);
+      const y = logLToY(point.logL);
+      ctx.save();
+      const outer = 18 + 28 * pulse;
+      const inner = 7 + 5 * pulse;
+      const g = ctx.createRadialGradient(x, y, inner * 0.2, x, y, outer);
+      g.addColorStop(0, 'rgba(255,255,255,1)');
+      g.addColorStop(0.2, 'rgba(255,240,180,0.95)');
+      g.addColorStop(0.45, 'rgba(255,170,90,0.75)');
+      g.addColorStop(1, 'rgba(255,120,50,0)');
+      ctx.beginPath();
+      ctx.fillStyle = g;
+      ctx.arc(x, y, outer, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = `rgba(255,230,190,${0.9 - 0.35 * pulse})`;
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2;
+        const r1 = inner;
+        const r2 = outer + 8 * pulse;
+        ctx.beginPath();
+        ctx.moveTo(x + r1 * Math.cos(a), y + r1 * Math.sin(a));
+        ctx.lineTo(x + r2 * Math.cos(a), y + r2 * Math.sin(a));
+        ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(255,245,220,0.95)';
+      ctx.font = 'bold 13px Inter, Segoe UI, sans-serif';
+      ctx.fillText('SUPERNOVA', x + outer + 8, y - outer * 0.2);
+      ctx.restore();
+    }
+
+    function drawAnimatedPath() {
+      if (!animatedPath.length) return;
+      ctx.save();
+      ctx.beginPath();
+      animatedPath.forEach((p, i) => {
+        const x = tempToX(p.T), y = logLToY(p.logL);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.strokeStyle = 'rgba(255, 214, 106, 0.95)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      const p = animatedPath[animatedPath.length - 1];
+      const x = tempToX(p.T), y = logLToY(p.logL);
+      ctx.beginPath();
+      ctx.fillStyle = '#ffd66a';
+      ctx.arc(x, y, 6.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+
+      if (animatedMass !== null) {
+        ctx.font = 'bold 13px Inter, Segoe UI, sans-serif';
+        ctx.fillStyle = 'rgba(255,214,106,0.96)';
+        ctx.fillText(`${animatedMass.toFixed(animatedMass < 1 ? 1 : 0)} M☉: ${p.phase}`, x + 10, y - 10);
+      }
+
+      const markers = phaseMarkersForTrack(stellarTrackForMass(animatedMass ?? 1, 240), animatedMass ?? 1);
+      markers.forEach((m) => {
+        const mx = tempToX(m.T), my = logLToY(m.logL);
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.arc(mx, my, 3.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.86)';
+        ctx.fillText(m.label, mx + 8, my - 6);
+      });
+
+      if ((animatedMass ?? 0) >= 8 && p.u > 0.985) {
+        const pulse = 0.5 + 0.5 * Math.sin(performance.now() * 0.02);
+        drawSupernovaBurst(p, pulse);
+      }
+      ctx.restore();
+    }
+
+    function updatePlaybackReadouts(point = null) {
+      if (!currentTrack.length || !point) {
+        evolutionSlider.value = 0;
+        evolutionReadout.textContent = '0%';
+        ageReadout.textContent = 'Not animating';
+        return;
+      }
+      const pct = Math.round(100 * point.u);
+      evolutionSlider.value = Math.round(point.u * 1000);
+      evolutionReadout.textContent = `${pct}%`;
+      const lifePct = Math.round(100 * point.u);
+      ageReadout.textContent = `${point.phase} · ${lifePct}% of schematic lifetime`;
+    }
+
+    function jumpToTrackIndex(idx) {
+      if (!currentTrack.length) return;
+      currentTrackIndex = clamp(idx, 0, currentTrack.length - 1);
+      const point = currentTrack[currentTrackIndex];
+      animatedPath = currentTrack.slice(currentTrackStartIndex, currentTrackIndex + 1);
+      selectedStar = { T: point.T, logL: point.logL };
+      renderDiagram();
+      updatePanels();
+      updatePlaybackReadouts(point);
+    }
+
+    function drawNamedStars() {
+      ctx.save();
+      ctx.font = '12px Inter, Segoe UI, sans-serif';
+      exampleStars.forEach((s) => {
+        const x = tempToX(s.T), y = logLToY(s.logL);
+        const color = tempToColor(s.T);
+        const g = ctx.createRadialGradient(x, y, 1, x, y, 12);
+        g.addColorStop(0, 'rgba(255,255,255,0.96)');
+        g.addColorStop(0.25, color);
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.beginPath();
+        ctx.fillStyle = g;
+        ctx.arc(x, y, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.arc(x, y, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(234,242,255,0.9)';
+        ctx.fillText(s.name, x + 8, y - 8);
+      });
+      ctx.restore();
+    }
+
+    function drawSelectedMarker() {
+      const x = tempToX(selectedStar.T);
+      const y = logLToY(selectedStar.logL);
+      const color = tempToColor(selectedStar.T);
+      const glow = ctx.createRadialGradient(x, y, 2, x, y, 30);
+      glow.addColorStop(0, 'rgba(255,255,255,0.95)');
+      glow.addColorStop(0.25, color);
+      glow.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.beginPath();
+      ctx.fillStyle = glow;
+      ctx.arc(x, y, 30, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(x, y, 7, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#ffffff';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(x, y, 13, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    function renderDiagram() {
+      animationTick += 1;
+      ctx.clearRect(0, 0, W, H);
+      drawBackgroundStars();
+      drawAxes();
+      drawSpectralBands();
+      drawGuideRegions();
+      drawRadiusLines();
+      drawEvolutionTracks();
+      drawSamplePopulation();
+      drawNamedStars();
+      drawLabels();
+      drawAnimatedPath();
+      drawSelectedMarker();
+    }
+
+    function makeStarVisual(container, T, R, options = {}) {
+      const {
+        clipNoteEl = null,
+        anchor = 'center',
+        baselineDiameter = 36
+      } = options;
+
+      container.innerHTML = '';
+      if (clipNoteEl) clipNoteEl.textContent = '';
+      const color = tempToColor(T);
+
+      const containerRect = container.getBoundingClientRect();
+      const frameW = Math.max(containerRect.width || 220, 180);
+      const frameH = Math.max(containerRect.height || 180, 140);
+      const px = Math.max(10, baselineDiameter * Math.max(R, 1e-8));
+      const radius = px / 2;
+
+      const glow = document.createElement('div');
+      glow.style.position = 'absolute';
+      glow.style.width = `${px * 1.45}px`;
+      glow.style.height = `${px * 1.45}px`;
+      glow.style.borderRadius = '50%';
+      glow.style.pointerEvents = 'none';
+      glow.style.filter = 'blur(20px)';
+      glow.style.opacity = '0.55';
+      glow.style.background = `radial-gradient(circle, ${color} 0%, rgba(255,255,255,0.12) 24%, rgba(255,255,255,0.025) 50%, rgba(255,255,255,0) 72%)`;
+
+      const disc = document.createElement('div');
+      disc.className = 'star-disc';
+      disc.style.position = 'absolute';
+      disc.style.width = `${px}px`;
+      disc.style.height = `${px}px`;
+      disc.style.background = `radial-gradient(circle at 38% 38%, rgba(255,255,255,0.97) 0%, ${color} 48%, rgba(0,0,0,0.10) 100%)`;
+
+      glow.style.left = `${frameW / 2}px`;
+      disc.style.left = `${frameW / 2}px`;
+      glow.style.transform = 'translate(-50%, -50%)';
+      disc.style.transform = 'translate(-50%, -50%)';
+
+      let discCenterY = frameH / 2;
+      if (anchor === 'top') {
+        discCenterY = frameH * 0.58;
+      } else if (anchor === 'bottom') {
+        discCenterY = frameH * 0.42;
+      }
+
+      const targetVisibleRadius = Math.min(frameW, frameH) * 0.38;
+      const overflowOffset = Math.max(0, radius - targetVisibleRadius);
+      const blendStart = 0.7 * targetVisibleRadius;
+      const blendSpan = Math.max(1, targetVisibleRadius - blendStart);
+      const blend = Math.max(0, Math.min(1, (radius - blendStart) / blendSpan));
+
+      if (anchor === 'top') {
+        discCenterY = discCenterY - blend * overflowOffset;
+      } else if (anchor === 'bottom') {
+        discCenterY = discCenterY + blend * overflowOffset;
+      }
+
+      glow.style.top = `${discCenterY}px`;
+      disc.style.top = `${discCenterY}px`;
+
+      container.appendChild(glow);
+      container.appendChild(disc);
+
+      const clipped = radius > targetVisibleRadius;
+      const visibleFraction = Math.min(1, (2 * targetVisibleRadius) / px);
+      if (clipNoteEl && clipped) {
+        clipNoteEl.textContent = `Only the inner ${Math.round(visibleFraction * 100)}% of the star’s diameter fits in frame`;
+      }
+    }
+
+    function updatePanels() {
+      const L = lumFromLog(selectedStar.logL);
+      const R = radiusSolar(selectedStar.T, L);
+      const region = classifyRegion(selectedStar.T, selectedStar.logL);
+      const spec = spectralText(selectedStar.T);
+      const near = nearestExample(selectedStar.T, selectedStar.logL);
+
+      coordsReadout.textContent = `T = ${Math.round(selectedStar.T).toLocaleString()} K, L = ${L.toPrecision(3)} L☉`;
+      nearestReadout.textContent = `${near.name} — ${near.note}`;
+      selectedTitle.textContent = 'Selected Star';
+      selTemp.textContent = formatK(selectedStar.T);
+      selLum.textContent = formatLum(L);
+      selRadius.textContent = formatRadius(R);
+      selClass.textContent = spec;
+      selRegion.textContent = region;
+      selNearest.textContent = near.name;
+
+      makeStarVisual(sunVisual, T_SUN, 1, {
+        label: 'Sun',
+        clipNoteEl: sunClipNote,
+        anchor: 'top',
+        baselineDiameter: 36
+      });
+      makeStarVisual(selectedVisual, selectedStar.T, R, {
+        label: 'Selected star',
+        clipNoteEl: selectedClipNote,
+        anchor: 'bottom',
+        baselineDiameter: 36
+      });
+
+      const ratioText = R >= 1 ? `${R.toFixed(R >= 10 ? 1 : 2)}× the Sun’s radius` : `${(1 / R).toFixed(2)}× smaller than the Sun`;
+      if (R > 1) {
+        scaleNote.textContent = `Approximate radius comparison: selected star has ${ratioText}. Large stars are no longer scaled down to fit the box; the frame simply shows the portion of the disc that fits.`;
+      } else {
+        scaleNote.textContent = `Approximate radius comparison: selected star has ${ratioText}.`;
+      }
+    }
+
+    function setSelectedStar(T, logL) {
+      selectedStar = {
+        T: clamp(T, T_MIN, T_MAX),
+        logL: clamp(logL, LOG_L_MIN, LOG_L_MAX)
+      };
+      renderDiagram();
+      updatePanels();
+    }
+
+    function pointerToPlot(ev) {
+      const rect = canvas.getBoundingClientRect();
+      const x = (ev.clientX - rect.left) * (canvas.width / rect.width);
+      const y = (ev.clientY - rect.top) * (canvas.height / rect.height);
+      return { x, y };
+    }
+
+    function updateFromPointer(ev) {
+      const { x, y } = pointerToPlot(ev);
+      if (x < plot.x || x > plot.x + plot.w || y < plot.y || y > plot.y + plot.h) return;
+      setSelectedStar(xToTemp(x), yToLogL(y));
+    }
+
+    canvas.addEventListener('pointerdown', (ev) => {
+      dragging = true;
+      canvas.setPointerCapture(ev.pointerId);
+      updateFromPointer(ev);
+    });
+
+    canvas.addEventListener('pointermove', (ev) => {
+      if (!dragging) return;
+      updateFromPointer(ev);
+    });
+
+    canvas.addEventListener('pointerup', () => { dragging = false; });
+    canvas.addEventListener('pointerleave', () => { dragging = false; });
+
+    sunBtn.addEventListener('click', () => setSelectedStar(T_SUN, 0));
+
+    randomBtn.addEventListener('click', () => {
+      const T = 10 ** lerp(Math.log10(T_MAX), Math.log10(T_MIN), Math.random());
+      const logL = lerp(LOG_L_MIN, LOG_L_MAX, Math.random());
+      setSelectedStar(T, logL);
+    });
+
+    mainSeqBtn.addEventListener('click', () => {
+      const u = Math.random();
+      const logT = lerp(Math.log10(26000), Math.log10(2800), u);
+      const T = 10 ** logT;
+      const center = 7.4 * (logT - Math.log10(5800));
+      const logL = center + (Math.random() - 0.5) * 0.35;
+      setSelectedStar(T, logL);
+    });
+
+    guidesCheck.addEventListener('change', () => {
+      showGuides = guidesCheck.checked;
+      renderDiagram();
+    });
+
+    spectralCheck.addEventListener('change', () => {
+      showSpectral = spectralCheck.checked;
+      renderDiagram();
+    });
+
+    radiusCheck.addEventListener('change', () => {
+      showRadiusLines = radiusCheck.checked;
+      if (showRadiusLines && !activeRadiusLines.length) activeRadiusLines = [...COMMON_RADIUS_LINES];
+      renderDiagram();
+    });
+
+    trackCheck.addEventListener('change', () => {
+      showTracks = trackCheck.checked;
+      if (showTracks && !activeTrackMasses.length) activeTrackMasses = [1, 2, 5, 10];
+      renderDiagram();
+    });
+
+    variablesOnlyCheck.addEventListener('change', () => {
+      showVariablesOnly = variablesOnlyCheck.checked;
+      renderDiagram();
+    });
+
+    radiusPreset.addEventListener('change', () => {
+      const v = radiusPreset.value;
+      if (v === 'off') {
+        showRadiusLines = false;
+        radiusCheck.checked = false;
+      } else if (v === 'all') {
+        showRadiusLines = true;
+        radiusCheck.checked = true;
+        activeRadiusLines = [...COMMON_RADIUS_LINES];
+      } else if (v) {
+        showRadiusLines = true;
+        radiusCheck.checked = true;
+        activeRadiusLines = [Number(v)];
+      }
+      renderDiagram();
+    });
+
+    trackPreset.addEventListener('change', () => {
+      const v = trackPreset.value;
+      if (v === 'off') {
+        showTracks = false;
+        trackCheck.checked = false;
+      } else if (v === 'all') {
+        showTracks = true;
+        trackCheck.checked = true;
+        activeTrackMasses = [0.8, 1, 2, 5, 10];
+      } else if (v) {
+        showTracks = true;
+        trackCheck.checked = true;
+        activeTrackMasses = [Number(v)];
+      }
+      renderDiagram();
+    });
+
+    function stopEvolution() {
+      if (animationHandle !== null) cancelAnimationFrame(animationHandle);
+      animationHandle = null;
+      playbackPaused = true;
+      playPauseBtn.textContent = 'Play';
+    }
+
+    function resetAnimatedPath() {
+      stopEvolution();
+      animatedPath = [];
+      animatedMass = null;
+      currentTrack = [];
+      currentTrackIndex = 0;
+      currentTrackStartIndex = 0;
+      currentHoldFrames = 0;
+      frameCounter = 0;
+      updatePlaybackReadouts();
+      renderDiagram();
+    }
+
+    function continueEvolution() {
+      if (!currentTrack.length) return;
+      stopEvolution();
+      playbackPaused = false;
+      playPauseBtn.textContent = 'Pause';
+      function step() {
+        if (playbackPaused) {
+          animationHandle = null;
+          return;
+        }
+        frameCounter++;
+        if (frameCounter % speedFactor !== 0) {
+          animationHandle = requestAnimationFrame(step);
+          return;
+        }
+
+        jumpToTrackIndex(currentTrackIndex);
+        const atEnd = currentTrackIndex >= currentTrack.length - 1;
+        const point = currentTrack[currentTrackIndex];
+
+        if ((animatedMass ?? 0) >= 8 && atEnd) {
+          currentHoldFrames += 1;
+          if (currentHoldFrames < 90 * speedFactor) {
+            animationHandle = requestAnimationFrame(step);
+            return;
+          }
+        }
+
+        if (!atEnd) {
+          currentTrackIndex += 1;
+          animationHandle = requestAnimationFrame(step);
+        } else {
+          animationHandle = null;
+          playbackPaused = true;
+          playPauseBtn.textContent = 'Play';
+          updatePlaybackReadouts(point);
+        }
+      }
+      animationHandle = requestAnimationFrame(step);
+    }
+
+    function animateEvolution() {
+      stopEvolution();
+      animatedPath = [];
+      animatedMass = inferMassFromSelectedStar(selectedStar.T, selectedStar.logL);
+      currentTrack = stellarTrackForMass(animatedMass, 240);
+      let startIdx = 0;
+      let bestD = Infinity;
+      currentTrack.forEach((p, i) => {
+        const d = 6 * (Math.log10(p.T) - Math.log10(selectedStar.T)) ** 2 + (p.logL - selectedStar.logL) ** 2;
+        if (d < bestD) { bestD = d; startIdx = i; }
+      });
+      currentTrackStartIndex = startIdx;
+      currentTrackIndex = startIdx;
+      currentHoldFrames = 0;
+      frameCounter = 0;
+      jumpToTrackIndex(currentTrackIndex);
+      continueEvolution();
+    }
+
+    evolveBtn.addEventListener('click', animateEvolution);
+    resetAnimBtn.addEventListener('click', resetAnimatedPath);
+    stopAnimBtn.addEventListener('click', stopEvolution);
+    playPauseBtn.addEventListener('click', () => {
+      if (!currentTrack.length) {
+        animateEvolution();
+        return;
+      }
+      if (playbackPaused || animationHandle === null) {
+        continueEvolution();
+      } else {
+        playbackPaused = true;
+        stopEvolution();
+      }
+    });
+    evolutionSlider.addEventListener('input', () => {
+      if (!currentTrack.length) return;
+      stopEvolution();
+      const u = Number(evolutionSlider.value) / 1000;
+      const idx = Math.round(u * (currentTrack.length - 1));
+      jumpToTrackIndex(idx);
+      playPauseBtn.textContent = 'Play';
+    });
+    speedSelect.addEventListener('change', () => {
+      speedFactor = Math.max(1, Number(speedSelect.value));
+    });
+
+    function populateExamples() {
+      exampleGrid.innerHTML = '';
+      exampleStars.forEach((star) => {
+        const btn = document.createElement('button');
+        btn.className = 'example-btn';
+        btn.innerHTML = `${star.name}<span>${star.note}</span>`;
+        btn.addEventListener('click', () => setSelectedStar(star.T, star.logL));
+        exampleGrid.appendChild(btn);
+      });
+    }
+
+    function startPulseLoop() {
+      function tick() {
+        if (animationHandle === null) renderDiagram();
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    speedFactor = Math.max(1, Number(speedSelect.value));
+    updatePlaybackReadouts();
+
+    populateExamples();
+    setSelectedStar(T_SUN, 0);
+    startPulseLoop();
+  </script>
+</body>
+</html>
