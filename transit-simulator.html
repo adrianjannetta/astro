@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b1423"><title>Exoplanet Transit Lab</title><meta name="description" content="Explore how a planet's size, orbit and alignment change an exoplanet transit light curve. A browser reconstruction of the UNL Flash simulator."><style>:root{color-scheme:dark;--bg:#0b1423;--panel:#111f31;--line:#26384c;--text:#edf3fa;--muted:#9dafc3;--cyan:#6fe0da;--gold:#ffd18a;--navy:#07101e}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 85% 0,#152b40 0,transparent 40%),var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}button,input,select{font:inherit}button,a,input,select,summary{touch-action:manipulation}button,a{transition:background .15s,color .15s}button{cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--gold);outline-offset:4px}header{max-width:1512px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:30px 36px 22px;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:15px}.brand-icon{color:var(--cyan);font-size:43px}.eyebrow{font-size:10px;font-weight:750;letter-spacing:2px;color:var(--cyan)}h1{font-size:29px;line-height:1.2;letter-spacing:-.8px;margin:5px 0 0}h2{font-size:17px;letter-spacing:-.3px;margin:0}h3{font-size:16px;margin:0 0 10px}p{margin:0 0 12px}a{color:var(--cyan)}.download{color:var(--text);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:9px 14px;font-size:12px}.download:hover{background:var(--panel)}main{max-width:1512px;margin:auto;padding:24px 36px 20px}.intro{display:flex;gap:15px;justify-content:space-between;align-items:center;margin-bottom:23px}.intro p{font-size:19px;margin:0}.intro span{font-size:12px;color:var(--muted)}.layout{display:grid;grid-template-columns:302px minmax(0,1fr);gap:20px;align-items:start}.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px}.controls{padding:22px 20px}.section-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.text-button{border:0;background:none;color:var(--cyan);font-size:12px;padding:5px 0}.text-button:hover{color:white}.field-label{font-size:11px;color:var(--muted);display:block;margin-bottom:6px}select{width:100%;border:1px solid #344a61;border-radius:7px;background:#0d1a2b;color:var(--text);padding:9px 8px;font-size:12px}.control{margin-top:22px}.control-heading{display:flex;justify-content:space-between;align-items:center;gap:5px;margin-bottom:8px}.control label{font-size:12px;font-weight:550}.value-wrap{display:flex;align-items:center;gap:6px}.value-wrap input{width:74px;background:var(--navy);border:1px solid #345069;border-radius:5px;color:var(--text);font-size:12px;padding:4px 5px;text-align:right}.unit{font-size:10px;color:var(--muted);min-width:25px}input[type=range]{width:100%;height:16px;accent-color:var(--cyan);cursor:pointer;margin:0}input[type=checkbox]{accent-color:var(--cyan);width:15px;height:15px;margin:0}.range-labels{display:flex;justify-content:space-between;color:#8c9fb6;font-size:10px}.star-properties{background:#182b3e;border-left:2px solid var(--gold);padding:10px 12px;font-size:11px;color:#c6d2df;margin-top:18px}.star-properties strong{color:var(--gold);font-weight:600}details{border-top:1px solid var(--line);padding-top:15px;margin-top:19px}summary{font-size:12px;font-weight:650;cursor:pointer;list-style-position:outside;margin-left:13px}summary::marker{color:var(--cyan)}.check{display:flex;gap:8px;align-items:center;font-size:12px;margin-top:17px;cursor:pointer}.small{font-size:11px;line-height:1.6}.muted{color:var(--muted)}.tight{margin:5px 0 0 23px}.secondary,.primary{border:1px solid #36516a;border-radius:7px;font-size:12px;padding:9px 13px;background:#192d42;color:var(--text);white-space:nowrap}.secondary:hover{background:#25435b}.primary{background:var(--cyan);color:#092127;border-color:var(--cyan);font-weight:750;min-width:83px}.primary:hover{background:#9cf2ed}.full{width:100%;margin:15px 0 10px}.workspace{min-width:0}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:16px}.metrics>div{background:#142338;padding:15px 18px;min-height:86px}.metrics span{display:block;color:var(--muted);font-size:9px;letter-spacing:1.1px;font-weight:600}.metrics strong{display:block;font-size:21px;line-height:1.4;font-weight:600;margin-top:5px;white-space:nowrap}.metrics>div:nth-child(2) strong{color:var(--cyan)}.metrics>div:last-child strong{font-size:15px;margin-top:10px}.visual-panel{padding:17px 21px 15px}.pill{border-radius:20px;font-size:10px;padding:4px 10px;background:#1c3b42;color:var(--cyan);white-space:nowrap}.views{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:20px;align-items:center}.star-wrap{min-width:0;position:relative}canvas{display:block;width:100%}#starCanvas{height:239px;background:#091322;border-radius:10px}.canvas-caption{font-size:10px;color:var(--muted);margin:8px 0 0;display:flex;justify-content:space-between;gap:8px}.canvas-caption span{color:var(--gold)}.orbit-wrap{border-left:1px solid var(--line);padding-left:20px;min-width:0}.mini-label{font-size:9px;letter-spacing:1.5px;color:var(--muted);text-align:center}#orbitCanvas{height:185px}.orbit-wrap p{text-align:center;margin:0;font-size:9px}.transport{display:flex;gap:10px;align-items:center;margin-top:20px;padding-top:14px;border-top:1px solid var(--line)}.transport>input{flex:1;min-width:45px;margin:0 5px}.speed-label{font-size:10px;color:var(--muted);display:flex;gap:7px;align-items:center}.speed-label select{width:58px;padding:7px}.graph-panel{padding:20px 21px 13px;margin-top:16px}.graph-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}.graph-heading p{color:var(--muted);font-size:11px;margin:4px 0 0}.segmented{display:flex;border:1px solid #344c63;border-radius:7px;padding:3px;background:var(--navy);flex-shrink:0}.segmented button{font-size:10px;background:transparent;color:var(--muted);border:0;padding:6px 9px;border-radius:4px}.segmented .selected{background:#254251;color:var(--cyan)}#graphCanvas{height:288px;margin-top:12px;cursor:crosshair;touch-action:none}.graph-footer{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.legend{display:flex;align-items:center;gap:14px;font-size:10px;color:var(--muted)}.legend .check{margin:0;font-size:10px}.line-swatch{display:inline-block;background:var(--cyan);width:17px;height:2px}.dot-swatch{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--gold);margin-right:6px}.export{display:flex;gap:16px}.export button{font-size:10px}.readout{font-size:11px;color:var(--muted);text-align:center;border-top:1px solid var(--line);margin-top:12px;padding-top:9px;font-variant-numeric:tabular-nums}.warning{background:#493422;color:#ffe0ab;padding:11px 16px;font-size:12px;border-radius:9px;margin-bottom:15px}.learning{display:grid;grid-template-columns:.9fr repeat(3,1fr);gap:14px;margin:28px 0}.learning-title{padding:20px 10px 0 0}.learning-title h2{font-size:22px;line-height:1.3;margin-top:10px;max-width:200px}.prompt{background:#101f31;border:1px solid var(--line);border-radius:12px;padding:19px;text-align:left;color:var(--text)}.prompt:hover{border-color:var(--cyan);background:#152c3d}.prompt>span{font-size:9px;letter-spacing:1.2px;color:var(--cyan);font-weight:650}.prompt strong{display:block;font-size:13px;margin:9px 0 7px}.prompt p{font-size:11px;color:var(--muted);margin:0}.model{padding:18px 22px}.model summary{font-size:13px}.model-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;margin-top:23px}.model-grid p{font-size:12px;color:#adbdcf}.equation{background:#0a1828;border-radius:6px;padding:13px;margin:13px 0;font-size:16px;color:var(--gold);text-align:center}footer{display:flex;justify-content:space-between;margin:25px 0 0;color:#71859d;font-size:10px}footer span:first-child{letter-spacing:1.2px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}[hidden]{display:none!important}@media(min-width:1450px){#starCanvas{height:270px}.views{grid-template-columns:minmax(0,1fr) 240px}#graphCanvas{height:315px}}@media(max-width:1100px){main{padding:20px}header{padding:24px 20px}.layout{grid-template-columns:270px minmax(0,1fr);gap:14px}.controls{padding:20px 16px}.metrics>div{padding:14px 9px}.metrics strong{font-size:18px}.metrics span{font-size:8px}.views{grid-template-columns:minmax(0,1fr) 150px;gap:12px}.orbit-wrap{padding-left:12px}#orbitCanvas{height:165px}.graph-heading{align-items:flex-start;flex-direction:column;gap:12px}.canvas-caption{flex-direction:column;gap:0}.learning{grid-template-columns:repeat(3,1fr)}.learning-title{grid-column:1/-1;padding:0}.learning-title h2{max-width:none;font-size:20px}.intro span{display:none}.visual-panel,.graph-panel{padding-left:15px;padding-right:15px}}@media(max-width:760px){h1{font-size:23px}.brand-icon{font-size:31px}.eyebrow{font-size:8px}.download{font-size:10px;padding:8px}.intro p{font-size:16px}.layout{display:flex;flex-direction:column}.controls,.workspace{width:100%}.controls{order:2}.workspace{order:1}.controls #basicControls{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}.metrics strong{font-size:17px}.metrics>div:last-child strong{font-size:12px}.metrics span{letter-spacing:.5px}.views{grid-template-columns:minmax(0,1fr) 140px}#starCanvas{height:210px}.learning{grid-template-columns:1fr}.learning-title{grid-column:auto}.model-grid{grid-template-columns:1fr;gap:16px}footer{gap:15px;flex-direction:column}.graph-heading{flex-direction:row}.graph-heading p{max-width:170px}.transport{gap:7px}.speed-label{font-size:0}.speed-label select{font-size:11px}.readout{font-size:10px}}@media(max-width:440px){header{padding:20px 14px}.brand{gap:8px}h1{font-size:20px}.brand-icon{display:none}main{padding:17px 12px}.views{grid-template-columns:minmax(0,1fr) 105px;gap:8px}.orbit-wrap{padding-left:8px}#orbitCanvas{height:150px}.orbit-wrap p{font-size:8px}#starCanvas{height:190px}.canvas-caption{font-size:8px}.metrics{grid-template-columns:repeat(2,1fr)}.metrics>div{min-height:72px;padding:10px 14px}.metrics>div:last-child strong{font-size:15px}.metrics span{font-size:9px}.graph-heading{flex-direction:column}#graphCanvas{height:260px}.controls #basicControls{gap:0 16px}.value-wrap input{width:66px}}
+
+@media(max-width:440px){.controls #basicControls{grid-template-columns:1fr}}
+
+/* Extended classroom experiments */
+.effects{margin-top:19px;padding-top:17px;border-top:1px solid var(--line)}.effects .small{margin-top:10px}.example-note{background:#192f40;border-left:3px solid var(--gold);padding:12px 14px;margin-top:15px;border-radius:5px;display:flex;gap:15px;align-items:center}.example-note p{font-size:11px;line-height:1.65;color:#c7d5e3;margin:0;flex:1}.example-note button{font-size:10px}.reference-swatch{display:inline-block;width:17px;border-top:2px dashed #ffd18a}.legend{flex-wrap:wrap;row-gap:8px}.learning{grid-template-columns:repeat(3,1fr)}.learning-title{grid-column:1/-1;padding:0}.learning-title h2{max-width:none}.canvas-caption #scaleLabel{color:var(--muted)}#starCanvas{height:290px}.model-grid>div:last-child{grid-column:1/-1;columns:2;column-gap:30px}.model-grid>div:last-child h3{column-span:all}.model-grid{grid-template-columns:1fr 1fr}.model-grid p{break-inside:avoid}
+@media(max-width:760px){.learning{grid-template-columns:1fr 1fr}.example-note{align-items:flex-start;flex-direction:column;gap:9px}#starCanvas{height:250px}.model-grid{grid-template-columns:1fr}.model-grid>div:last-child{columns:1}}
+@media(max-width:440px){.learning{grid-template-columns:1fr}#starCanvas{height:220px}}
+</style></head>
+<body>
+<header><div class="brand"><span class="brand-icon" aria-hidden="true">◉</span><div><div class="eyebrow">ASTRONOMY · INTERACTIVE LAB</div><h1>Exoplanet transit lab</h1></div></div><a class="download" href="transit-simulator.html" download="">↓ Offline copy</a></header>
+<main>
+<div class="intro"><p>Discover a planet through the light it blocks.</p><span>Change a variable. Watch the star. Read the evidence.</span></div>
+<div class="layout">
+<aside class="panel controls">
+<div class="section-heading"><h2>Build your system</h2><button id="reset" class="text-button">Reset</button></div>
+<label class="field-label" for="preset">Starting point</label><select id="preset"><option value="custom" disabled="">Custom setup</option><optgroup label="Classroom experiments"><option value="original">Original simulator setup</option><option value="jupiter">Jupiter-sized planet at 1 AU</option><option value="earth">Earth-sized planet at 1 AU</option><option value="grazing">A grazing transit</option><option value="miss">A planet that misses the star</option><option value="mass">Star size versus mass</option><option value="hatspot">Starspot crossing · HAT-P-11 b inspired</option><option value="dusttail">Dust tail · Kepler-1520 b inspired</option></optgroup><optgroup label="Legacy examples · historical values" id="legacyOptions"></optgroup></select>
+<div id="basicControls"></div>
+<div class="star-properties" id="starProperties"></div>
+<div class="effects"><label class="field-label" for="phenomenon">Classroom effect</label><select id="phenomenon"><option value="none">Plain planet</option><option value="spot">Dark starspot crossing</option><option value="tail">Disintegrating planet + dust tail</option></select><div id="spotSettings" hidden=""><div id="spotControls"></div><p class="small muted">Spot brightness is relative to the nearby surface: 1 = no darkening. The spot stays at y = 0.2 R★; changing inclination can move the planet off it.</p></div><div id="tailSettings" hidden=""><div id="tailControls"></div><p class="small muted">Dust trails the planet along its orbit. The amber tint highlights the dust; it does not represent emitted light.</p></div></div>
+<details id="advanced"><summary>Orbit &amp; mass settings</summary><div id="advancedControls"></div><p class="small muted">ω is the argument of periastron. It matters for eccentric orbits; 90° places periastron on the near side.</p></details>
+<label class="check"><input id="limb" type="checkbox"> Darken the edge of the star</label><p class="small muted tight">Optional linear limb darkening, u = 0.6.</p>
+<details><summary>Simulated observations</summary><label class="check"><input id="observations" type="checkbox"> Show noisy measurements</label><div id="noiseControls"></div><button id="resample" class="secondary full">Take a new set of measurements</button><p class="small muted">Random Gaussian noise, sampled evenly across the displayed time window.</p></details>
+</aside>
+<section class="workspace" aria-label="Transit experiment">
+<div class="metrics" aria-live="polite"><div><span>ORBITAL PERIOD</span><strong id="period">—</strong></div><div><span>MODEL DEPTH</span><strong id="depth">—</strong></div><div><span id="durationLabel">TRANSIT DURATION</span><strong id="duration">—</strong></div><div><span>ALIGNMENT</span><strong id="alignment">—</strong></div></div>
+<div id="warning" class="warning" role="status" hidden=""></div>
+<section class="panel visual-panel"><div class="section-heading"><h2>View towards the star</h2><span id="geometry" class="pill">Transit</span></div>
+<div class="views"><div class="star-wrap"><canvas id="starCanvas" role="img" aria-label="Planet moving across the face of a star, with their relative radii to scale"></canvas><div class="canvas-caption"><span id="scaleLabel">Fixed physical scale · dashed circle = Sun</span><span id="positionLabel"></span></div></div><div class="orbit-wrap"><div class="mini-label">ORBIT OVERVIEW</div><canvas id="orbitCanvas" role="img" aria-label="Orbit seen from above its plane; star and planet markers are enlarged"></canvas><p class="small muted">View from above the orbital plane.<br>Markers enlarged for visibility.</p></div></div>
+<div class="transport"><button id="play" class="primary" aria-label="Play the orbit">▶ Play</button><button id="centre" class="secondary">Centre</button><label for="phase" class="sr-only">Position in the displayed time window</label><input id="phase" type="range" min="0" max="1000" value="500"><label class="speed-label" for="speed">Speed <select id="speed"><option value="0.5">½×</option><option value="1" selected="">1×</option><option value="2">2×</option><option value="4">4×</option></select></label></div>
+</section>
+<section class="panel graph-panel"><div class="graph-heading"><div><h2>Light curve</h2><p id="graphDescription">Brightness falls when the planet blocks part of the star.</p></div><div class="segmented" aria-label="Time window"><button id="zoom" class="selected" aria-pressed="true">Transit window</button><button id="full" aria-pressed="false">Full orbit</button></div></div>
+<div id="exampleNote" class="example-note" hidden=""><p id="exampleText"></p><button id="feature" class="secondary">Show feature</button></div>
+<canvas id="graphCanvas" role="img" aria-label="Light curve showing relative brightness against time. Drag to move the planet; the position slider is a keyboard alternative."></canvas>
+<div class="graph-footer"><div class="legend"><label class="check"><input id="theory" type="checkbox" checked=""><span class="line-swatch"></span>Theoretical curve</label><label id="referenceLegend" class="check" hidden=""><input id="reference" type="checkbox" checked=""><span class="reference-swatch"></span>Plain-planet reference</label><span id="observationLegend" hidden=""><i class="dot-swatch"></i>Measurements</span></div><div class="export"><button id="png" class="text-button">Save graph PNG</button><button id="csv" class="text-button">Export CSV</button></div></div><div class="readout" id="readout">Drag the graph cursor to explore the transit.</div>
+</section>
+</section></div>
+<section class="learning"><div class="learning-title"><div class="eyebrow">TRY IT · EXPLAIN IT</div><h2>Classroom investigations</h2></div><button class="prompt" data-experiment="radius"><span>01 / SIZE</span><strong>Double the planet’s radius.</strong><p>How does the depth change? Keep the other settings fixed.</p></button><button class="prompt" data-experiment="inclination"><span>02 / ALIGNMENT</span><strong>Why don’t all planets transit?</strong><p>Lower the inclination from 90°. When does the dip disappear?</p></button><button class="prompt" data-experiment="earth"><span>03 / DETECTION</span><strong>Could you find an Earth?</strong><p>Try the Earth analogue, then add 0.01% noise.</p></button><button class="prompt" data-experiment="mass"><span>04 / STAR SIZE</span><strong>Change the mass of the star.</strong><p>Compare its radius with the fixed Sun outline. Why does the transit depth change?</p></button><button class="prompt" data-experiment="hatspot"><span>05 / STARSPOTS · HAT-P-11 b</span><strong>Why is there a bump in the dip?</strong><p>Cover a dark starspot, then change its size and brightness.</p></button><button class="prompt" data-experiment="dusttail"><span>06 / DUST TAIL · KEPLER-1520 b</span><strong>Why does the transit fade out slowly?</strong><p>Follow the trailing dust across the star. Change the tail length and dust amount.</p></button></section>
+<details class="model panel"><summary>How the model works · equations, assumptions &amp; source</summary><div class="model-grid"><div><h3>Reading the evidence</h3><p>The stellar disc uses a fixed pixels-per-solar-radius scale, so its size changes with stellar mass. The dashed circle marks a star of radius 1 R☉. The planet shares the same physical scale.<br><br>A plain transit gives the planet’s size <em>relative to its star</em>. For a small planet crossing a uniformly bright star away from the edge:</p><div class="equation">fractional depth ≈ (R<sub>p</sub> / R<sub>★</sub>)²</div><p>Double R<sub>p</sub> and the depth becomes four times larger. The time between repeated transits gives the orbital period.</p><p>The duration runs from the solid planet’s first contact to its last contact. In the dust-tail example, the dust can keep dimming the star after the solid core has left. A grazing transit clips the edge of the star; it need not reach the depth predicted by the simple formula.</p></div><div><h3>What is calculated?</h3><p>The orbit follows Kepler’s equation. The period includes the masses of both bodies:</p><div class="equation">P² = 4π²a³ / G(M<sub>★</sub> + M<sub>p</sub>)</div><p>Here a is the relative orbit’s semi-major axis. The brightness uses the overlapping areas of the two discs. Optional limb darkening is integrated over 80 concentric rings.</p><p>Inclination is 90° for an edge-on orbit and 0° for a face-on orbit. The alignment readout uses the minimum projected separation b, in stellar radii.</p></div><div><h3>Scope &amp; provenance</h3><p>Rebuilt from the supplied University of Nebraska–Lincoln Flash <em>Exoplanet Transit Simulator</em>, with its main controls, stellar mass relations and historical example parameters.</p><p>Legacy presets are teaching examples from the old file, not current measurements. Orientation is expressed here as the conventional periastron angle ω. This is a new implementation, not a pixel-for-pixel port.</p><p>The star is spherical and on the main sequence. The planet is dark and spherical. Atmospheres, reflected light, secondary eclipses and other planets are omitted from the plain model. Orbits intersecting the star are flagged as invalid.</p><p>The two extra examples are illustrative models inspired by observed systems, not fits to particular observations. HAT-P-11 b uses approximate historical planetary parameters and one stationary circular spot in projection. Spot contrast and placement are chosen for teaching. Its light is normalized to the spotted star outside transit.</p><p>The Kepler-1520 b example has an illustrative core and an exponentially fading tail represented by 90 partly transparent dust parcels. Absorption is added in an optically thin approximation; stellar intensity at each parcel’s centre is used if limb darkening is enabled. Dust overlaps and occultation by the small core are not corrected. The diagram and curve use the same parcel locations and opacity weights; amber is a visibility aid. Dust dynamics, forward-scattering brightening and transit-to-transit changes are not included.</p><p>Scientific background: <a href="https://academic.oup.com/mnras/article/442/4/3686/1344952" target="_blank" rel="noopener">Béky et al. (2014), spot-crossing model</a>; <a href="https://arxiv.org/abs/0901.0282" target="_blank" rel="noopener">Bakos et al., HAT-P-11 b</a>; <a href="https://arxiv.org/abs/1201.2662" target="_blank" rel="noopener">Rappaport et al. (2012), disintegrating planet</a>; <a href="https://doi.org/10.1051/0004-6361/201220260" target="_blank" rel="noopener">Budaj (2013), dust-tail light curve</a>.</p><p><a href="https://astro.unl.edu/naap/esp/esp.html" target="_blank" rel="noopener">UNL Extrasolar Planets Lab ↗</a></p></div></div></details>
+<footer><span>EXOPLANET TRANSIT LAB</span><span>A modern browser reconstruction · no Flash required</span></footer>
+</main><script>/* Browser reconstruction of the UNL transit simulator. SI constants; time in days. */
+(function(root){
+ 'use strict';
+ const TAU=2*Math.PI, AU=149597870700, RS=695700000, RJ=71492000, MS=1.98847e30, MJ=1.89813e27, G=6.67430e-11;
+ const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+ // Fixed pixels per solar radius: stellar mass cannot silently re-scale the view.
+ function viewScale(width,height){return Math.min(height*.40,width*.34)/stellar(2.5).R;}
+ function stellar(m){
+   const L=m<.43?.232220431737728*m**2.26:m**3.99, l=Math.log10(L);
+   const coeff=l< -1.61?[3.76424847491303,.140316436337353,.0139709648834783,.00146257952166353,.000114203991057792,.00000534009520193973,.000000100897501873505]:l<.22?[3.76404749064937,.139720836051662,.0131949471107482,.000878016217920958,-.00016087678534046,-.0000718923778642037,-.0000098430921759891]:l<1.48?[3.76404935999916,.139700505514371,.0132834512392025,.000681148684168764,.0000515647954029831,-.000230931527900807,.0000134429776870977]:[3.76208682178285,.14541668375348,.00684584757963743,.00396076543835346,-.000464655201610208,-.000381007438333072,.0000623586254118745];
+   const T=10**coeff.reduce((s,c,j)=>s+c*l**j,0), R=33736108.2311059*Math.sqrt(L)/T**2;
+   return {L,T,R};
+ }
+ function eccentric(M,e){
+   M=((M+Math.PI)%TAU+TAU)%TAU-Math.PI;
+   let E=e<.8?M:Math.sign(M||1)*Math.PI;
+   for(let j=0;j<35;j++){const d=(E-e*Math.sin(E)-M)/(1-e*Math.cos(E)); E-=d;if(Math.abs(d)<1e-13)break;}return E;
+ }
+ function overlap(d,r,k){
+   if(d>=r+k)return 0;
+   if(d<=Math.abs(r-k))return Math.PI*Math.min(r,k)**2;
+   const a=Math.acos(clamp((d*d+r*r-k*k)/(2*d*r),-1,1)),b=Math.acos(clamp((d*d+k*k-r*r)/(2*d*k),-1,1));
+   // Circular segments avoid subtracting nearly equal terms at first/last contact.
+   return clamp(r*r*(a-Math.sin(a)*Math.cos(a))+k*k*(b-Math.sin(b)*Math.cos(b)),0,Math.PI*Math.min(r,k)**2);
+ }
+ function make(p){
+   const star=stellar(p.sm), k=p.pr*RJ/(star.R*RS), a=p.a*AU/(star.R*RS), inc=p.i*Math.PI/180,w=p.w*Math.PI/180,e=p.e;
+   const P=TAU*Math.sqrt((p.a*AU)**3/(G*(p.sm*MS+p.pm*MJ)))/86400;
+   const valid=a*(1-e)>1+k;
+   function atM(M){const E=eccentric(M,e),f=2*Math.atan2(Math.sqrt(1+e)*Math.sin(E/2),Math.sqrt(1-e)*Math.cos(E/2)),r=a*(1-e*Math.cos(E)),th=f+w;
+     return {x:r*Math.cos(th),y:r*Math.sin(th)*Math.cos(inc),z:r*Math.sin(th)*Math.sin(inc),ox:r*Math.cos(th),oy:r*Math.sin(th),r,f,E};}
+   function Mf(f){const E=2*Math.atan2(Math.sqrt(1-e)*Math.sin(f/2),Math.sqrt(1+e)*Math.cos(f/2));return E-e*Math.sin(E);}
+   function q(th){const r=a*(1-e*e)/(1+e*Math.cos(th-w)); return r*r*(Math.cos(th)**2+Math.sin(th)**2*Math.cos(inc)**2);}
+   let jbest=1,qbest=Infinity;const N=512;
+   for(let j=1;j<N;j++){let z=q(j*Math.PI/N);if(z<qbest){qbest=z;jbest=j;}}
+   let lo=Math.max(0,(jbest-1)*Math.PI/N),hi=Math.min(Math.PI,(jbest+1)*Math.PI/N);
+   for(let j=0;j<65;j++){let u=lo+(hi-lo)/3,v=hi-(hi-lo)/3;if(q(u)<q(v))hi=v;else lo=u;}
+   const theta=(lo+hi)/2,M0=Mf(theta-w),b=Math.sqrt(q(theta));
+   const transits=valid&&p.i>0&&b<1+k;
+   function pos(phase){return atM(M0+TAU*phase);}
+   function edge(dir){let inner=0,outer=1e-7;
+     const inside=t=>{const v=pos(dir*t);return v.z>0&&Math.hypot(v.x,v.y)<1+k;};
+     while(outer<.5&&inside(outer)){inner=outer;outer*=1.5;}
+     for(let j=0;j<60;j++){const mid=(inner+outer)/2;if(inside(mid))inner=mid;else outer=mid;}
+     return dir*(inner+outer)/2;
+   }
+   const ingress=transits?edge(-1):null,egress=transits?edge(1):null,duration=transits?(egress-ingress)*P*24:0;
+   const rings=[];let norm=0;const limb=p.limb?.6:0;
+   if(limb)for(let j=0;j<80;j++){let r0=j/80,r1=(j+1)/80,rm=(r0+r1)/2,I=1-limb*(1-Math.sqrt(1-rm*rm));rings.push([r0,r1,I]);norm+=I*Math.PI*(r1*r1-r0*r0);}
+   function plainFlux(phase){if(!valid)return 1;const v=pos(phase),d=Math.hypot(v.x,v.y);if(v.z<=0||d>=1+k)return 1;
+     if(!limb)return 1-overlap(d,1,k)/Math.PI;
+     let blocked=0;for(const [r0,r1,I]of rings)blocked+=I*(overlap(d,r1,k)-overlap(d,r0,k));return clamp(1-blocked/norm,0,1);
+   }
+   const mode=p.phenomenon||'none',starNorm=limb?norm:Math.PI;
+   const intensity=d=>1-limb*(1-Math.sqrt(Math.max(0,1-Math.min(1,d*d))));
+   const spot=mode==='spot'?{x:clamp(p.spotX??.2,-.6,.6),y:.2,radius:clamp(p.spotRadius??.15,.03,.3),brightness:clamp(p.spotBrightness??.35,.05,1)}:null;
+   // Projected circular spot, wholly inside the star for the exposed controls.
+   // Uniform intensity is analytic; limb darkening uses disc-intersection quadrature.
+   function spotIntegral(v){
+     if(!spot)return 0;
+     if(v&&(v.z<=0||Math.hypot(v.x-spot.x,v.y-spot.y)>=k+spot.radius))return 0;
+     if(!limb)return v?overlap(Math.hypot(v.x-spot.x,v.y-spot.y),spot.radius,k):Math.PI*spot.radius**2;
+     const x0=Math.max(spot.x-spot.radius,v?v.x-k:-1),x1=Math.min(spot.x+spot.radius,v?v.x+k:1);
+     if(x1<=x0)return 0;
+     let sum=0;const n=100,dx=(x1-x0)/n,nodes=[-.8611363116,-.3399810436,.3399810436,.8611363116],weights=[.3478548451,.6521451549,.6521451549,.3478548451];
+     for(let j=0;j<n;j++){const x=x0+(j+.5)*dx,sy=Math.sqrt(Math.max(0,spot.radius**2-(x-spot.x)**2));let y0=spot.y-sy,y1=spot.y+sy;
+       if(v){const py=Math.sqrt(Math.max(0,k*k-(x-v.x)**2));y0=Math.max(y0,v.y-py);y1=Math.min(y1,v.y+py);}
+       if(y1<=y0)continue;const mid=(y0+y1)/2,h=(y1-y0)/2;
+       for(let q=0;q<4;q++)sum+=dx*h*weights[q]*intensity(Math.hypot(x,mid+h*nodes[q]));
+     }return sum;
+   }
+   const spotDeficit=spot?(1-spot.brightness)*spotIntegral(null):0;
+   const tailLag=mode==='tail'?clamp(p.tailAngle??40,5,90)/360:0,tailAmount=clamp(p.dustAmount??1,0,3);
+   function tail(phase){if(mode!=='tail'||!valid||tailAmount===0)return[];const out=[],n=90;
+     for(let j=0;j<n;j++){const q=(j+.5)/n;out.push({...pos(phase-tailLag*q),radius:.07+.07*q,opacity:tailAmount*.06*Math.exp(-4*q)*80/n,lag:tailLag*q});}return out;
+   }
+   function flux(phase){if(!valid)return 1;let f=plainFlux(phase);
+     if(spot){const deficit=(1-spot.brightness)*spotIntegral(pos(phase));return clamp(1-((1-f)*starNorm-deficit)/(starNorm-spotDeficit),0,1);}
+     if(mode==='tail'){let dustLoss=0;for(const v of tail(phase)){if(v.z<=0)continue;const d=Math.hypot(v.x,v.y);dustLoss+=v.opacity*overlap(d,1,v.radius)*intensity(d)/starNorm;}f-=dustLoss;}
+     return clamp(f,0,1);
+   }
+   const baseHalf=transits?Math.min(.5,Math.max(Math.abs(ingress),Math.abs(egress))*2):Math.min(.15,Math.max(.005,1.8/(TAU*a)));
+   const half=mode==='tail'?Math.min(.49,baseHalf+tailLag):baseHalf;
+   let depth=transits?1-flux(0):0;
+   if(mode!=='none'&&valid)for(let j=0;j<=500;j++)depth=Math.max(depth,1-flux(-half+2*half*j/500));
+   return {star,k,a,P,valid,b,transits,ingress,egress,duration,depth,half,pos,flux,plainFlux,M0,spot,tail,tailLag,mode,spotDeficit,starNorm};
+ }
+ const api={make,stellar,eccentric,overlap,viewScale,constants:{AU,RS,RJ,MS,MJ,G,TAU}};
+ if(typeof module!=='undefined')module.exports=api;else root.TransitPhysics=api;
+})(typeof window!=='undefined'?window:globalThis);
+</script><script>(()=>{
+'use strict';
+const offlineSource='<!doctype html>\n'+document.documentElement.outerHTML;
+const $=id=>document.getElementById(id),TAU=2*Math.PI;
+const defaults={sm:1.09,pm:.657,pr:1.32,a:.047,e:0,i:86.929,w:90,limb:false,noise:.1,n:50,phenomenon:'none',spotRadius:.15,spotBrightness:.35,spotX:.2,tailAngle:40,dustAmount:1};
+let p={...defaults},model,phase=0,view='zoom',playing=false,lastFrame=0,curve=[],samples=[],graphMap,seed=271828;
+const legacy=[['OGLE-TR-113 b',1.32,1.09,.78,.0229,0,89.4,0],['TrES-1',.61,1.08,.87,.0393,.135,88.2,0],['XO-1 b',.9,1.3,1,.0488,0,87.7,0],['HD 209458 b',.69,1.32,1.01,.045,.07,86.929,83],['OGLE-TR-111 b',.53,1,.82,.047,0,86.5,0],['OGLE-TR-10 b',.54,1.16,1.22,.04162,0,86.46,0],['HD 189733 b',1.15,1.154,.82,.0313,0,85.79,0],['HD 149026 b',.36,.725,1.3,.042,0,85.3,0],['OGLE-TR-132 b',1.19,1.13,1.35,.0306,0,85,0]];
+legacy.forEach((v,j)=>{const o=document.createElement('option');o.value='legacy'+j;o.textContent=v[0];$('legacyOptions').append(o);});
+const controls=[
+ ['pr','Planet radius','Rⱼ',.01,2.5,.001,'basicControls','0.01','2.5',false],
+ ['sm','Star mass','M☉',.1,2.5,.001,'basicControls','0.1','2.5',false],
+ ['a','Orbital size (semi-major axis)','AU',.005,2,.00001,'basicControls','0.005','2 · log scale',true],
+ ['i','Inclination','°',0,90,.001,'basicControls','Face-on · 0°','90° · edge-on',false],
+ ['pm','Planet mass','Mⱼ',.00001,15,.00001,'advancedControls','0.00001','15 · log scale',true],
+ ['e','Eccentricity','',0,.8,.001,'advancedControls','Circular · 0','0.8',false],
+ ['w','Periastron angle ω','°',0,360,.1,'advancedControls','0°','360°',false],
+ ['noise','Noise (standard deviation)','%',0,.5,.0001,'noiseControls','0','0.5%',false],
+ ['n','Number of measurements','',10,500,1,'noiseControls','10','500',false],
+ ['spotRadius','Spot radius','R★',.03,.3,.001,'spotControls','0.03','0.3',false],
+ ['spotBrightness','Spot brightness','×',.05,1,.01,'spotControls','Dark · 0.05','1 · no spot',false],
+ ['spotX','Spot horizontal position','R★',-.6,.6,.01,'spotControls','−0.6','+0.6',false],
+ ['tailAngle','Tail length (orbital phase)','°',5,90,.5,'tailControls','5°','90°',false],
+ ['dustAmount','Dust amount','×',0,3,.05,'tailControls','0 · no dust','3',false]
+];
+function compact(n,d=3){return Number(n.toFixed(d)).toString();}
+for(const [key,label,unit,min,max,step,parent,left,right,log]of controls){
+ const box=document.createElement('div');box.className='control';
+ box.innerHTML=`<div class="control-heading"><label for="${key}Num">${label}</label><div class="value-wrap"><input id="${key}Num" type="number" min="${min}" max="${max}" step="${step}" aria-label="${label}"><span class="unit">${unit}</span></div></div><input id="${key}Range" type="range" min="${log?0:min}" max="${log?1000:max}" step="${log?1:step}" aria-label="${label} slider"><div class="range-labels"><span>${left}</span><span>${right}</span></div>`;
+ $(parent).append(box);
+ const num=$(key+'Num'),range=$(key+'Range');
+ function change(value){if(!Number.isFinite(value))return; p[key]=Math.max(min,Math.min(max,value));if(key==='n')p[key]=Math.round(p[key]);$('preset').value='custom';sync();rebuild(key==='noise'||key==='n');}
+ num.addEventListener('change',()=>{if(num.value===''){sync();return;}change(Number(num.value));});
+ range.addEventListener('input',()=>change(log?min*(max/min)**(Number(range.value)/1000):Number(range.value)));
+}
+function sync(){for(const[key,, ,min,max,,, , ,log]of controls){$(key+'Num').value=compact(p[key],key==='a'||key==='pm'?5:4);$(key+'Range').value=log?1000*Math.log(p[key]/min)/Math.log(max/min):p[key];} $('limb').checked=p.limb;$('phenomenon').value=p.phenomenon;$('spotSettings').hidden=p.phenomenon!=='spot';$('tailSettings').hidden=p.phenomenon!=='tail';}
+function setPreset(name){p={...defaults};
+ if(name==='jupiter'||name==='earth')p={...p,sm:1,pm:name==='earth'?.0032:1,pr:name==='earth'?.09:1,a:1,i:90,noise:name==='earth'?.002:.03};
+ if(name==='grazing')p.i=83.5;
+ if(name==='miss')p.i=78;
+ if(name==='mass')p={...p,sm:1,pr:1,i:90};
+ if(name==='hatspot')p={...p,sm:.809,pm:.081,pr:.422,a:.05254,e:.198,i:89.2,w:355.2,limb:true,noise:.008,phenomenon:'spot'};
+ if(name==='dusttail')p={...p,sm:.7,pm:.0001,pr:.03,a:.0131,e:0,i:88,w:90,limb:false,noise:.02,phenomenon:'tail'};
+ if(name.startsWith('legacy')){const v=legacy[Number(name.slice(6))];if(v)p={...p,pm:v[1],pr:v[2],sm:v[3],a:v[4],e:v[5],i:v[6],w:(90-v[7]+360)%360};}
+ if(name==='hatspot'||name==='dusttail'){view='zoom';updateViewButtons();$('observations').checked=false;$('theory').checked=true;$('reference').checked=true;}
+ $('preset').value=name;phase=0;sync();rebuild();
+}
+function bounds(){const h=view==='full'?.5:model.half;return[-h,h];}
+function random(){seed=(Math.imul(1664525,seed)+1013904223)>>>0;return(seed+.5)/4294967296;}
+function normal(){return Math.sqrt(-2*Math.log(random()))*Math.cos(TAU*random());}
+function generateSamples(){const [lo,hi]=bounds();samples=[];for(let j=0;j<p.n;j++){let x=lo+(hi-lo)*j/(p.n-1);samples.push({x,y:model.flux(x)+normal()*p.noise/100});}}
+function rebuild(observationsOnly=false){
+ if(!observationsOnly){model=TransitPhysics.make(p);const [lo,hi]=bounds();phase=Math.max(lo,Math.min(hi,phase));const points=[];for(let j=0;j<=600;j++)points.push(lo+(hi-lo)*j/600);
+  if(model.transits){const l=Math.max(lo,model.ingress-model.half*.15),r=Math.min(hi,model.egress+model.half*.15);for(let j=0;j<=450;j++)points.push(l+(r-l)*j/450);}
+  points.sort((a,b)=>a-b);curve=points.map(x=>({x,y:model.flux(x),ref:model.plainFlux(x)}));
+ }
+ generateSamples();updateMetrics();draw();
+}
+function updateMetrics(){
+ $('period').textContent=model.P<10?model.P.toFixed(3)+' days':model.P.toFixed(1)+' days';
+ $('depth').textContent=!model.valid?'—':(model.depth*100).toFixed(model.depth<.001?4:2)+'%';
+ $('durationLabel').textContent=p.phenomenon==='tail'?'CORE TRANSIT TIME':'TRANSIT DURATION';
+ $('duration').textContent=!model.valid?'—':!model.transits?(p.phenomenon==='tail'?'No core transit':'No transit'):model.duration<1?(model.duration*60).toFixed(1)+' min':model.duration.toFixed(2)+' hours';
+ $('alignment').textContent=!model.valid?'Invalid orbit':model.transits?(model.b>Math.abs(1-model.k)?'Grazing':'Transit'):model.depth>1e-10?'Dust only':'No transit';
+ $('geometry').textContent=!model.valid?'Orbit intersects star':model.transits?'b = '+model.b.toFixed(3)+' R★':(model.depth>1e-10?'Dust only · b = ':'No transit · b = ')+model.b.toFixed(2);
+ $('starProperties').innerHTML=`Derived star: <strong>${model.star.R.toFixed(3)} R☉</strong> · ${Math.round(model.star.T).toLocaleString()} K<br>Luminosity ${compact(model.star.L,3)} L☉ · main-sequence approximation`;
+ $('warning').hidden=model.valid;
+ $('warning').textContent='This orbit intersects the star: a(1 − e) ≤ R★ + Rp. Increase orbital size or reduce eccentricity. Transit results are disabled for this setup.';
+ $('observationLegend').hidden=!$('observations').checked;
+ $('referenceLegend').hidden=p.phenomenon==='none';$('exampleNote').hidden=p.phenomenon==='none';
+ $('graphDescription').textContent=p.phenomenon==='spot'?'A dark spot crossing interrupts the transit dip.':p.phenomenon==='tail'?'Trailing dust prolongs the dimming after the solid core passes.':'Brightness falls when the planet blocks part of the star.';
+ $('exampleText').textContent=p.phenomenon==='spot'?'HAT-P-11 b inspired teaching model. When the planet covers a dark spot it blocks less light, so the curve rises within the dip. The star has not flared. Change the spot brightness towards 1 to remove the bump.':p.phenomenon==='tail'?'Kepler-1520 b inspired teaching model. A small core leads a fading dust tail, giving a faster drop and a slower recovery. The shaded interval and duration refer to the solid core only. Core size and dust properties are illustrative.':'';
+ $('feature').textContent=p.phenomenon==='spot'?'Show spot crossing':'Show lingering dust';
+}
+function canvasSetup(id){const c=$(id),r=c.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);if(c.width!==Math.round(r.width*dpr)||c.height!==Math.round(r.height*dpr)){c.width=Math.round(r.width*dpr);c.height=Math.round(r.height*dpr);}const ctx=c.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,r.width,r.height);return{c,ctx,W:r.width,H:r.height};}
+function circle(ctx,x,y,r,color){ctx.beginPath();ctx.arc(x,y,Math.max(0,r),0,TAU);ctx.fillStyle=color;ctx.fill();}
+function starColor(){const T=model.star.T;return T<4000?'#ffae6c':T<5500?'#ffd08a':T<7000?'#ffe8b2':'#deecff';}
+function drawStar(){const{ctx,W,H}=canvasSetup('starCanvas'),solar=TransitPhysics.viewScale(W,H),r=solar*model.star.R,cx=W/2,cy=H/2,pos=model.pos(phase),px=cx+pos.x*r,py=cy-pos.y*r,rp=model.k*r;
+ ctx.fillStyle='#091322';ctx.fillRect(0,0,W,H);
+ for(let j=0;j<28;j++){const x=((j*79+31)%997)/997*W,y=((j*113+17)%593)/593*H;circle(ctx,x,y,j%4===0?.8:.45,'#314055');}
+ const glow=ctx.createRadialGradient(cx,cy,r*.85,cx,cy,r*1.18);glow.addColorStop(0,'#ffd08a16');glow.addColorStop(1,'#ffd08a00');circle(ctx,cx,cy,r*1.18,glow);
+ if(pos.z<=0)circle(ctx,px,py,rp,'#050b14');
+ if(p.limb){const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r),hex=starColor().slice(1),rgb=[0,2,4].map(j=>parseInt(hex.slice(j,j+2),16));for(const q of[0,.2,.4,.6,.8,.9,.95,.98,1]){const I=1-.6*(1-Math.sqrt(1-q*q));g.addColorStop(q,'rgb('+rgb.map(v=>Math.round(v*I)).join(',')+')');}circle(ctx,cx,cy,r,g);}else circle(ctx,cx,cy,r,starColor());
+ if(model.spot){const s=model.spot;ctx.save();ctx.globalAlpha=1-s.brightness;circle(ctx,cx+s.x*r,cy-s.y*r,s.radius*r,'#000');ctx.restore();}
+ if(model.mode==='tail'){
+  const dust=model.tail(phase);
+  // Amber outside the stellar disc makes otherwise invisible dust easy to follow.
+  ctx.save();ctx.beginPath();ctx.rect(0,0,W,H);ctx.moveTo(cx+r,cy);ctx.arc(cx,cy,r,0,TAU);ctx.clip('evenodd');
+  for(const v of dust){ctx.globalAlpha=Math.min(.8,v.opacity*3);circle(ctx,cx+v.x*r,cy-v.y*r,v.radius*r,'#ffd18a');}ctx.restore();
+  // In front of the star, the same parcel positions and opacities attenuate light.
+  ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,TAU);ctx.clip();
+  for(const v of dust)if(v.z>0){ctx.globalAlpha=Math.min(1,v.opacity);circle(ctx,cx+v.x*r,cy-v.y*r,v.radius*r,'#000');}ctx.restore();
+ }
+ // This solar-radius guide does not change when mass changes.
+ ctx.save();ctx.strokeStyle='#bdcce480';ctx.setLineDash([4,4]);ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,cy,solar,0,TAU);ctx.stroke();ctx.restore();
+ if(pos.z>0){circle(ctx,px,py,rp,'#07101b');ctx.strokeStyle='#9ac8d950';ctx.lineWidth=.7;ctx.beginPath();ctx.arc(px,py,rp,0,TAU);ctx.stroke();}
+ ctx.save();ctx.beginPath();ctx.rect(0,0,W,H);ctx.clip();ctx.beginPath();let first=true;for(let j=0;j<=160;j++){const v=model.pos(-model.half+2*model.half*j/160),x=cx+v.x*r,y=cy-v.y*r;if(first){ctx.moveTo(x,y);first=false;}else ctx.lineTo(x,y);}ctx.strokeStyle='#6fe0da30';ctx.setLineDash([3,5]);ctx.lineWidth=1;ctx.stroke();ctx.restore();
+ const visible=px+rp>0&&px-rp<W&&py+rp>0&&py-rp<H;
+ $('positionLabel').textContent=!visible?'Planet outside this view':pos.z<=0?'Planet on far side':Math.hypot(pos.x,pos.y)<1+model.k?'Planet crossing star':'Planet on near side';
+ if(model.spot&&pos.z>0&&Math.hypot(pos.x-model.spot.x,pos.y-model.spot.y)<model.k+model.spot.radius)$('positionLabel').textContent='Planet covering dark spot → less light blocked';
+ if(model.mode==='tail'&&pos.z>0&&Math.hypot(pos.x,pos.y)>=1+model.k&&model.flux(phase)<.99999)$('positionLabel').textContent='Core has cleared; dust still blocks light';
+ if(!visible){const ang=Math.atan2(py-cy,px-cx),edge=Math.min((W/2-18)/Math.max(Math.abs(Math.cos(ang)),.001),(H/2-18)/Math.max(Math.abs(Math.sin(ang)),.001)),x=cx+edge*Math.cos(ang),y=cy+edge*Math.sin(ang);ctx.save();ctx.translate(x,y);ctx.rotate(ang);ctx.fillStyle='#6fe0da';ctx.beginPath();ctx.moveTo(5,0);ctx.lineTo(-4,-4);ctx.lineTo(-4,4);ctx.fill();ctx.restore();}
+ if(model.mode==='tail'&&visible){const lx=Math.max(15,Math.min(W-40,px+24)),ly=Math.max(34,py-25);ctx.strokeStyle='#91a8bf';ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(px,py-3);ctx.lineTo(lx,ly+3);ctx.stroke();ctx.fillStyle='#becada';ctx.font='9px system-ui';ctx.fillText('Core',lx,ly);}
+ ctx.fillStyle='#7f96b1';ctx.font='9px system-ui';ctx.fillText('OBSERVER’S VIEW',10,17);ctx.fillText('R★ = '+model.star.R.toFixed(3)+' R☉',10,H-12);
+ ctx.strokeStyle='#9dafc3';ctx.beginPath();ctx.moveTo(W-10-solar,H-15);ctx.lineTo(W-10,H-15);ctx.stroke();ctx.textAlign='right';ctx.fillText('1 R☉',W-10,H-21);
+}
+function drawOrbit(){const{ctx,W,H}=canvasSetup('orbitCanvas'),span=model.a*(1+p.e),scale=Math.min(W*.39,H*.35)/span,cx=W/2,cy=H*.43;
+ ctx.strokeStyle='#46647e';ctx.lineWidth=1;ctx.beginPath();for(let j=0;j<=240;j++){const v=model.pos(j/240),x=cx+v.ox*scale,y=cy-v.oy*scale;j?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.closePath();ctx.stroke();if(model.mode==='tail'){ctx.save();for(const d of model.tail(phase)){ctx.globalAlpha=Math.min(.8,d.opacity*4);circle(ctx,cx+d.ox*scale,cy-d.oy*scale,2.4,'#ffd18a');}ctx.restore();}circle(ctx,cx,cy,5,starColor());const v=model.pos(phase);circle(ctx,cx+v.ox*scale,cy-v.oy*scale,4.5,'#6fe0da');
+ ctx.strokeStyle='#6fe0da80';ctx.beginPath();ctx.moveTo(W-14,H*.6);ctx.lineTo(W-14,H*.2);ctx.lineTo(W-17,H*.2+5);ctx.moveTo(W-14,H*.2);ctx.lineTo(W-11,H*.2+5);ctx.stroke();ctx.fillStyle='#91a8bf';ctx.font='8px system-ui';ctx.textAlign='center';ctx.fillText(p.i===0?'Observer above this plane':'Observer projection ↑',W/2,H-19);ctx.fillText(p.i===0?'(face-on orbit)':'(into the orbital plane)',W/2,H-7);
+}
+function drawGraph(){const{ctx,W,H}=canvasSetup('graphCanvas');renderGraph(ctx,W,H,false);}
+function renderGraph(ctx,W,H,exported){
+ ctx.fillStyle='#111f31';ctx.fillRect(0,0,W,H);const L=64,R=16,T=exported?63:23,B=48,pw=W-L-R,ph=H-T-B,[lo,hi]=bounds();
+ const noise=$('observations').checked?p.noise/100:0,dy=Math.max(model.depth,noise*3,.00008),ylo=1-Math.max(model.depth*1.3,noise*3.7,dy*.8),yhi=1+Math.max(dy*.25,noise*3.7);
+ const X=x=>L+(x-lo)/(hi-lo)*pw,Y=y=>T+(yhi-y)/(yhi-ylo)*ph,hours=(hi-lo)*model.P*24<144,tf=model.P*(hours?24:1),unit=hours?'hours':'days';
+ if(!exported)graphMap={L,R,T,B,W,H,lo,hi};
+ ctx.font='10px system-ui';ctx.fillStyle='#9dafc3';ctx.textAlign='right';
+ for(let j=0;j<=4;j++){const value=ylo+(yhi-ylo)*j/4,y=Y(value);ctx.strokeStyle='#26384c';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(L,y);ctx.lineTo(W-R,y);ctx.stroke();ctx.fillStyle='#9dafc3';ctx.fillText((value*100).toFixed((yhi-ylo)*100<.1?3:2),L-9,y+3);}
+ ctx.textAlign='center';for(let j=0;j<=4;j++){const x=lo+(hi-lo)*j/4;ctx.fillStyle='#9dafc3';ctx.fillText((x*tf).toFixed((hi-lo)*tf<1?2:1),X(x),H-B+19);}
+ ctx.save();ctx.translate(13,T+ph/2);ctx.rotate(-Math.PI/2);ctx.fillStyle='#becada';ctx.font='10px system-ui';ctx.fillText('Relative brightness (%)',0,0);ctx.restore();ctx.fillStyle='#becada';ctx.fillText(`Time from ${p.phenomenon==='tail'?(model.transits?'core mid-transit':'core closest approach'):model.transits?'mid-transit':'closest approach'} (${unit})`,L+pw/2,H-7);
+ ctx.save();ctx.beginPath();ctx.rect(L,T,pw,ph);ctx.clip();
+ if(model.transits){ctx.fillStyle='#6fe0da08';ctx.fillRect(X(model.ingress),T,X(model.egress)-X(model.ingress),ph);}
+ ctx.strokeStyle='#788da355';ctx.setLineDash([4,5]);ctx.beginPath();ctx.moveTo(L,Y(1));ctx.lineTo(W-R,Y(1));ctx.stroke();ctx.setLineDash([]);
+ if($('observations').checked){for(const v of samples)circle(ctx,X(v.x),Y(v.y),exported?2.5:2,'#ffd18abf');}
+ if(p.phenomenon!=='none'&&$('reference').checked){ctx.beginPath();curve.forEach((v,j)=>j?ctx.lineTo(X(v.x),Y(v.ref)):ctx.moveTo(X(v.x),Y(v.ref)));ctx.strokeStyle='#ffd18a';ctx.lineWidth=1.3;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);}
+ if($('theory').checked){ctx.beginPath();curve.forEach((v,j)=>j?ctx.lineTo(X(v.x),Y(v.y)):ctx.moveTo(X(v.x),Y(v.y)));ctx.strokeStyle='#6fe0da';ctx.lineWidth=2;ctx.stroke();}
+ if(!exported){ctx.strokeStyle='#e4eefb70';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(X(phase),T);ctx.lineTo(X(phase),H-B);ctx.stroke();ctx.setLineDash([]);if($('theory').checked)circle(ctx,X(phase),Y(model.flux(phase)),4,'#fff');}
+ ctx.restore();ctx.textAlign='left';ctx.fillStyle='#91a8bf';ctx.font='9px system-ui';if(!exported)ctx.fillText(model.transits?(p.phenomenon==='tail'?'Shaded region: solid core only':'Shaded region: first to last contact'):model.depth>1e-10?'Dust crosses the star; the core misses':'No transit at this alignment',L,12);
+ if(exported){ctx.fillStyle='#edf3fa';ctx.font='bold 18px system-ui';ctx.fillText('Exoplanet Transit Lab · '+(view==='full'?'full orbit':'transit window'),L,24);ctx.fillStyle='#9dafc3';ctx.font='11px system-ui';ctx.fillText(`Rp ${compact(p.pr)} Rj  ·  M★ ${compact(p.sm)} Msun  ·  a ${compact(p.a,5)} AU  ·  i ${compact(p.i)}°  ·  e ${compact(p.e)}  ·  ω ${compact(p.w)}°`,L,43);}
+}
+function updatePosition(){const[lo,hi]=bounds();$('phase').value=1000*(phase-lo)/(hi-lo);const hours=phase*model.P*24,flux=model.flux(phase);$('readout').textContent=`Time ${hours>=0?'+':''}${hours.toFixed(2)} h  ·  Model brightness ${(100*flux).toFixed(4)}%  ·  Phase ${(phase+1)%1<.00001?'0.000':((phase+1)%1).toFixed(3)} of orbit`;}
+function draw(){drawStar();drawOrbit();drawGraph();updatePosition();}
+function setPlaying(value){playing=value;$('play').textContent=value?'Ⅱ Pause':'▶ Play';$('play').setAttribute('aria-label',value?'Pause the orbit':'Play the orbit');lastFrame=0;}
+function animation(time){if(playing&&model){if(lastFrame){const dt=Math.min((time-lastFrame)/1000,.1),[lo,hi]=bounds();phase+=dt*(hi-lo)/14*Number($('speed').value);if(phase>hi)phase=lo+(phase-hi);draw();}lastFrame=time;}requestAnimationFrame(animation);}
+$('preset').addEventListener('change',e=>setPreset(e.target.value));
+$('reset').addEventListener('click',()=>{setPlaying(false);view='zoom';$('observations').checked=false;$('theory').checked=true;$('speed').value='1';$('reference').checked=true;updateViewButtons();setPreset('original');});
+$('limb').addEventListener('change',e=>{p.limb=e.target.checked;rebuild();});
+$('observations').addEventListener('change',()=>{updateMetrics();drawGraph();});
+$('theory').addEventListener('change',drawGraph);
+$('reference').addEventListener('change',drawGraph);
+$('phenomenon').addEventListener('change',e=>{p.phenomenon=e.target.value;$('preset').value='custom';sync();rebuild();});
+$('feature').addEventListener('click',()=>{setPlaying(false);let best=-Infinity;for(let j=0;j<=1000;j++){const x=-model.half+2*model.half*j/1000,v=model.pos(x),score=model.spot?-Math.hypot(v.x-model.spot.x,v.y-model.spot.y):(x>(model.egress??0)?1-model.flux(x):-1);if(score>best){best=score;phase=x;}}draw();});
+$('resample').addEventListener('click',()=>{$('observations').checked=true;generateSamples();updateMetrics();drawGraph();});
+$('play').addEventListener('click',()=>setPlaying(!playing));
+$('centre').addEventListener('click',()=>{setPlaying(false);phase=0;draw();});
+$('phase').addEventListener('input',e=>{setPlaying(false);const[lo,hi]=bounds();phase=lo+Number(e.target.value)/1000*(hi-lo);draw();});
+function updateViewButtons(){for(const id of['zoom','full']){$(id).classList.toggle('selected',id===view);$(id).setAttribute('aria-pressed',String(id===view));}}
+for(const id of['zoom','full'])$(id).addEventListener('click',()=>{view=id;updateViewButtons();rebuild();});
+function graphPointer(e){if(!graphMap)return;const rect=$('graphCanvas').getBoundingClientRect(),{L,R,W,lo,hi}=graphMap;phase=lo+Math.max(0,Math.min(1,(e.clientX-rect.left-L)/(W-L-R)))*(hi-lo);setPlaying(false);draw();}
+$('graphCanvas').addEventListener('pointerdown',e=>{$('graphCanvas').setPointerCapture(e.pointerId);graphPointer(e);});
+$('graphCanvas').addEventListener('pointermove',e=>{if($('graphCanvas').hasPointerCapture(e.pointerId))graphPointer(e);});
+$('graphCanvas').addEventListener('pointerup',e=>{if($('graphCanvas').hasPointerCapture(e.pointerId))$('graphCanvas').releasePointerCapture(e.pointerId);});
+function saveBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
+$('png').addEventListener('click',()=>{const c=document.createElement('canvas');c.width=1600;c.height=850;const ctx=c.getContext('2d');ctx.scale(1.5,1.5);renderGraph(ctx,1600/1.5,850/1.5,true);ctx.fillStyle='#9dafc3';ctx.font='9px system-ui';ctx.textAlign='right';ctx.fillText(`${$('theory').checked?'Cyan: model. ':''}${$('observations').checked?'Gold: measurements; σ = '+compact(p.noise,4)+'%. ':''}${p.phenomenon==='spot'?'Illustrative starspot crossing':p.phenomenon==='tail'?'Illustrative dust tail':p.limb?'Limb darkening u = 0.6':'Uniform stellar disc'}${p.phenomenon!=='none'&&$('reference').checked?' · Dashed: plain planet':''}`,1600/1.5-16,57);c.toBlob(blob=>{if(blob)saveBlob(blob,'exoplanet-light-curve.png');},'image/png');});
+$('csv').addEventListener('click',()=>{const lines=['# Exoplanet Transit Lab: synthetic model and measurements','# '+JSON.stringify(p),'# orbital_period_days='+model.P,'# phase_zero=minimum_projected_separation_on_near_side','series,time_from_midpoint_hours,orbital_phase,relative_flux'];for(const v of curve){lines.push(`model,${v.x*model.P*24},${v.x},${v.y}`);if(p.phenomenon!=='none')lines.push(`plain_planet_reference,${v.x*model.P*24},${v.x},${v.ref}`);}if($('observations').checked)for(const v of samples)lines.push(`measurement,${v.x*model.P*24},${v.x},${v.y}`);saveBlob(new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8'}),'exoplanet-transit-data.csv');});
+for(const button of document.querySelectorAll('[data-experiment]'))button.addEventListener('click',()=>{setPlaying(false);view='zoom';updateViewButtons();$('observations').checked=false;$('theory').checked=true;$('reference').checked=true;const exp=button.dataset.experiment;setPreset(['earth','mass','hatspot','dusttail'].includes(exp)?exp:'original');if(exp==='radius'||exp==='inclination'){p.i=90;p.pr=.5;$('preset').value='custom';sync();rebuild();}if(exp==='earth'){p.noise=.01;$('observations').checked=true;sync();rebuild(true);}document.querySelector('.workspace').scrollIntoView({behavior:'smooth',block:'start'});});
+// A downloaded self-contained page can make another offline copy without fetching files.
+const download=document.querySelector('.download');download.addEventListener('click',e=>{e.preventDefault();saveBlob(new Blob([offlineSource],{type:'text/html;charset=utf-8'}),'transit-simulator.html');});
+setPreset('original');new ResizeObserver(()=>{if(model)draw();}).observe(document.querySelector('.workspace'));requestAnimationFrame(animation);
+})();
+</script></body></html>
